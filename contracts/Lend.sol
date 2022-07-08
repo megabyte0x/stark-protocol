@@ -64,13 +64,17 @@ contract Lend is Context {
         require(deal.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
         require (deal.timeRentedUntil< block.timestamp, "ERR:TM"); // TM => Timeout
 
-        // ! TODO: Make the payment with interest rate.
-
         uint256 value = msg.value;
-        require(value == deal.instalmentAmt, "ERR:WV"); // WV => Wrong value
+        uint256 interestAmt  =  (deal.instalmentAmt * deal.interestRate);
+        require(value == deal.instalmentAmt + interestAmt, "ERR:WV"); // WV => Wrong value
         
-        
-        (bool success, ) = lender.call{value: value}("");
+        uint256 amtToLeder = deal.instalmentAmt + (interest * 95 * 10**17);
+        uint256 amtToProtocol = interestAmt * 5 * 10**16;
+
+        (bool success, ) = lender.call{value: amtToLeder}("");
+        require(success, "ERR:OT"); //OT => On Trnasfer
+
+        (bool success, ) = deployer.call{value: amtToProtocol}("");
         require(success, "ERR:OT"); //OT => On Trnasfer
 
         deal.amountPaidTotal += value;
@@ -80,16 +84,13 @@ contract Lend is Context {
     function requestNoOfInstalment(unit8 noOfAddInstalments ) external onlyBorrower {
         require (noOfAddInstalments>=3, "ERR:MR"); // MR => Minimum required no of instalments
 
-        acceptRequestOfInstalment(noOfAddInstalments);
-        
-
+        acceptRequestOfInstalment(noOfAddInstalments); 
     }
 
     function acceptRequestOfInstalment(uint8 _noOfAddInstalments, uint8 _interestRate) external onlyLender {
         
         deal.noOfInstalments += _noOfAddInstalments;
         deal.interestRate =  _interestRate;
-
     }
 
     modifier onlyBorrower() {
