@@ -44,7 +44,17 @@ contract Lend is Context {
         deal.interestRate = 0;
     }
 
-    function payAtOnce() external onlyBorrowee {
+    modifier onlyBorrower () {
+        require(msg.sender == borrower, "ERR:BO"); // BO => Borrower only
+        _;
+    }
+
+    modifier onlyLender () {
+        require(msg.sender == lender, "ERR:LO"); // BL => Lender only
+        _;
+    }
+
+    function payAtOnce() external onlyBorrower {
         require(deal.amountDueTotal > 0, "ERR:NM"); // NM => No more installments
         require(deal.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
         require (deal.timeRentedUntil< block.timestamp, "ERR:TM"); // TM => Timeout
@@ -71,17 +81,17 @@ contract Lend is Context {
         uint256 amtToLeder = deal.instalmentAmt + (interest * 95 * 10**17);
         uint256 amtToProtocol = interestAmt * 5 * 10**16;
 
-        (bool success, ) = lender.call{value: amtToLeder}("");
-        require(success, "ERR:OT"); //OT => On Trnasfer
+        (bool successInLender, ) = lender.call{value: amtToLeder}("");
+        require(success, "ERR:OT"); //OT => On Transfer
 
-        (bool success, ) = deployer.call{value: amtToProtocol}("");
-        require(success, "ERR:OT"); //OT => On Trnasfer
+        (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
+        require(success, "ERR:OT"); //OT => On Transfer
 
         deal.amountPaidTotal += value;
         deal.amountDueTotal -= value;
     }
 
-    function requestNoOfInstalment(unit8 noOfAddInstalments ) external onlyBorrower {
+    function requestNoOfInstalment(uint8 noOfAddInstalments ) external onlyBorrower {
         require (noOfAddInstalments>=3, "ERR:MR"); // MR => Minimum required no of instalments
 
         acceptRequestOfInstalment(noOfAddInstalments); 
@@ -91,16 +101,6 @@ contract Lend is Context {
         
         deal.noOfInstalments += _noOfAddInstalments;
         deal.interestRate =  _interestRate;
-    }
-
-    modifier onlyBorrower() {
-        require(msg.sender == borrower, "ERR:BO"); // BO => Borrower only
-        _;
-    }
-
-    modifier onlyLender () {
-        require(msg.sender == lender, "ERR:BL"); // BL => Lender only
-        _;
     }
 
 }
