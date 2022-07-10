@@ -13,8 +13,8 @@ contract Lend is Context {
         uint256 amountPaidTotal; // * Amount paid by the borrower in total
         uint256 instalmentAmt; // * Amount to be paid per insalment
         uint256 timeRentedSince; // * Time when the deal started
+        uint256 interestRate; // * Interest rate decided by the lender.
         uint8 noOfInstalments; // * No of instalments in which borrower will pay amount
-        uint8 interestRate; // * Interest rate decided by the lender.
         bool addedInstalments; // * If borrower got more instalments after request.
     }
 
@@ -25,6 +25,7 @@ contract Lend is Context {
         address _lender,
         uint256 _instalmentAmount,
         uint256 _totalAmount,
+        uint256 _interestRate,
         uint8 _noOfInstalments
     ) {
         deployer = _msgSender();
@@ -33,15 +34,11 @@ contract Lend is Context {
 
         DealDetials storage dealDetails = deal;
 
-        // deal = DealDetials({
-        //     instalmentAmount: _instalmentAmount,
-        //     noOfInstalment: _noOfInstalments,
-        //     totalAmount: _totalAmoount
-        // });
         dealDetails.instalmentAmt = _instalmentAmount;
         dealDetails.noOfInstalments = _noOfInstalments;
         dealDetails.totalAmount = _totalAmount;
-        deal.timeRentedSince = uint256(block.timestamp);
+        dealDetails.interestRate = _interestRate;
+        dealDetails.timeRentedSince = uint256(block.timestamp);
     }
 
     modifier onlyBorrower() {
@@ -57,14 +54,20 @@ contract Lend is Context {
     function payAtOnce() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
+        require(
+            dealDetails.amountPaidTotal < dealDetails.totalAmount,
+            "ERR:NM"
+        ); // NM => No more installments
 
         uint256 value = msg.value;
-        require(value == dealDetails.totalAmount, "ERR:WV"); // WV => Wrong value
+        uint256 amountLeftToPay = dealDetails.totalAmount -
+            dealDetails.amountPaidTotal;
+        require(value == amountLeftToPay, "ERR:WV"); // WV => Wrong value
 
         (bool success, ) = lender.call{value: value}("");
         require(success, "ERR:OT"); //OT => On Trnasfer
 
-        deal.amountPaidTotal += value;
+        dealDetails.amountPaidTotal += value;
     }
 
     function payInInstallment() external payable onlyBorrower {
