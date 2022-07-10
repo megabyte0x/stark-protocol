@@ -4,19 +4,18 @@ pragma solidity ^0.8.15;
 import "@openzeppelin/contracts/utils/Context.sol";
 
 contract Lend is Context {
-    
     address private deployer;
     address private borrower;
     address private lender;
 
     struct DealDetials {
-        uint256 amountDueTotal;
-        uint256 amountPaidTotal;
-        uint256 instalmentAmt;
-        uint64 timeRentedSince;
-        uint64 timeRentedUntil;
-        uint8 noOfInstalments;
-        uint8 interestRate;
+        uint256 totalAmount; // * Total amount borrowed by the borrower
+        uint256 amountPaidTotal; // * Amount paid by the borrower in total
+        uint256 instalmentAmt; // * Amount to be paid per insalment
+        uint64 timeRentedSince; // * Time when the deal started
+        uint8 noOfInstalments; // * No of instalments in which borrower will pay amount
+        uint8 interestRate; // * Interest rate decided by the lender.
+        bool addedInstalments; // * If borrower got more instalments after request.
     }
 
     DealDetials private deal;
@@ -24,83 +23,96 @@ contract Lend is Context {
     constructor(
         address _borrower,
         address _lender,
-        uint256 _amountDueTotal,
-        uint64 _timeRentedSince,
-        uint64 _timeRentedUntil,
+        uint256 _instalmentAmount,
+        uint256 _totalAmoount,
         uint8 _noOfInstalments
     ) {
         deployer = _msgSender();
         borrower = _borrower;
         lender = _lender;
-        uint256 _instalmentAmt = _amountDueTotal / _noOfInstalments;
-        deal = DealDetials(
-            _amountDueTotal,
-            _instalmentAmt,
-            _timeRentedSince,
-            _timeRentedUntil,
-            _noOfInstalments
-        );
-        deal.amountPaidTotal = 0;
-        deal.interestRate = 0;
+
+        deal = DealDetials({
+            instalmentAmount: _instalmentAmount,
+            noOfInstalment: _noOfInstalments,
+            totalAmount: _totalAmoount
+        });
+        deal.timeRentedSince = block.timestamp;
     }
 
-    modifier onlyBorrower () {
+    modifier onlyBorrower() {
         require(msg.sender == borrower, "ERR:BO"); // BO => Borrower only
         _;
     }
 
-    modifier onlyLender () {
+    modifier onlyLender() {
         require(msg.sender == lender, "ERR:LO"); // BL => Lender only
         _;
     }
 
     function payAtOnce() external onlyBorrower {
-        require(deal.amountDueTotal > 0, "ERR:NM"); // NM => No more installments
-        require(deal.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
-        require (deal.timeRentedUntil< block.timestamp, "ERR:TM"); // TM => Timeout
+        DealDetials storage dealDetails = deal;
+        require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
 
         uint256 value = msg.value;
-        require(value == deal.amountDueTotal, "ERR:WV"); // WV => Wrong value
+        require(value == dealDetails.totalAmount, "ERR:WV"); // WV => Wrong value
 
         (bool success, ) = lender.call{value: value}("");
         require(success, "ERR:OT"); //OT => On Trnasfer
 
         deal.amountPaidTotal += value;
-        deal.amountDueTotal -= value;
     }
 
     function payInInstallment() external onlyBorrower {
-        require(deal.amountDueTotal > 0, "ERR:NM"); // NM => No more installments
-        require(deal.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
-        require (deal.timeRentedUntil< block.timestamp, "ERR:TM"); // TM => Timeout
+        DealDetials storage dealDetails = deal;
+
+        require(dealDetails.noOfInstalments <= 0, "ERR:NM"); // NM => No more installments
 
         uint256 value = msg.value;
-        uint256 interestAmt  =  (deal.instalmentAmt * deal.interestRate);
-        require(value == deal.instalmentAmt + interestAmt, "ERR:WV"); // WV => Wrong value
-        
-        uint256 amtToLeder = deal.instalmentAmt + (interest * 95 * 10**17);
-        uint256 amtToProtocol = interestAmt * 5 * 10**16;
+        uint256 interestAmt = (dealDetails.instalmentAmt *
+            dealDetails.interestRate);
+        require(value == dealDetails.instalmentAmt + interestAmt, "ERR:WV"); // WV => Wrong value
 
-        (bool successInLender, ) = lender.call{value: amtToLeder}("");
-        require(success, "ERR:OT"); //OT => On Transfer
+        if (dealDetails.addedInstalments) {
+            uint256 amtToLeder = dealDetails.instalmentAmt +
+                (interest * 95 * 10**16);
+            uint256 amtToProtocol = interestAmt * 5 * 10**16;
 
-        (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
-        require(success, "ERR:OT"); //OT => On Transfer
+            (bool successInLender, ) = lender.call{value: amtToLeder}("");
+            require(success, "ERR:OT"); //OT => On Transfer
 
-        deal.amountPaidTotal += value;
-        deal.amountDueTotal -= value;
+            (bool successInBorrower, ) = deployer.call{value: amtToProtocol}(
+                ""
+            );
+            require(success, "ERR:OT"); //OT => On Transfer
+        } else {
+            uint256 amtToLenderOnly = dealDetails.instalmentAmt + interest;
+
+            (bool success, ) = lender.call{value: amtToLenderOnly}("");
+            require(success, "ERR:OT"); //OT => On Transfer
+        }
+
+        dealDetails.amountPaidTotal += value;
+        --dealDetails.noOfInstalments;
     }
 
-    function requestNoOfInstalment(uint8 noOfAddInstalments ) external onlyBorrower {
-        require (noOfAddInstalments>=3, "ERR:MR"); // MR => Minimum required no of instalments
+    function requestNoOfInstalment(uint8 noOfAddInstalments)
+        external
+        onlyBorrower
+    {
+        require(noOfAddInstalments >= 3, "ERR:MR"); // MR => Minimum required no of instalments
 
-        acceptRequestOfInstalment(noOfAddInstalments); 
+        acceptRequestOfInstalment(noOfAddInstalments);
     }
 
-    function acceptRequestOfInstalment(uint8 _noOfAddInstalments, uint8 _interestRate) external onlyLender {
-        
-        deal.noOfInstalments += _noOfAddInstalments;
-        deal.interestRate =  _interestRate;
-    }
+    function acceptRequestOfInstalment(
+        uint8 _noOfAddInstalments,
+        uint8 _interestRate
+    ) external onlyLender {
+        DealDetials storage dealDetails = deal;
 
+        dealDetails.noOfInstalments += _noOfAddInstalments;
+        dealDetails.interestRate = _interestRate;
+
+        deal.addedInstalments = true;
+    }
 }
