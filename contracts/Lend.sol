@@ -51,6 +51,7 @@ contract Lend is Context {
         _;
     }
 
+    // * FUNCTION: Pay the amount left at once
     function payAtOnce() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
@@ -70,6 +71,7 @@ contract Lend is Context {
         dealDetails.amountPaidTotal += value;
     }
 
+    // * FUNCTION: Pay the pre-defined amount in instalments not necessarily periodically.
     function payInInstallment() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
 
@@ -108,6 +110,8 @@ contract Lend is Context {
         --dealDetails.noOfInstalments;
     }
 
+
+    // * FUNCTION: Request the Lender for more instalments
     function requestNoOfInstalment(uint16 noOfAddInstalments)
         public view
         onlyBorrower
@@ -117,6 +121,7 @@ contract Lend is Context {
         // emit event
     }
 
+    // * FUNCTION: Accept the request made the Lender for more instalments
     function acceptRequestOfInstalment(
         uint16 _noOfAddInstalments,
         uint256 _interestRate
