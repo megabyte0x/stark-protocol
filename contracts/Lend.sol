@@ -14,7 +14,7 @@ contract Lend is Context {
         uint256 instalmentAmt; // * Amount to be paid per insalment
         uint256 timeRentedSince; // * Time when the deal started
         uint256 interestRate; // * Interest rate decided by the lender.
-        uint8 noOfInstalments; // * No of instalments in which borrower will pay amount
+        uint16 noOfInstalments; // * No of instalments in which borrower will pay amount
         bool addedInstalments; // * If borrower got more instalments after request.
     }
 
@@ -26,7 +26,7 @@ contract Lend is Context {
         uint256 _instalmentAmount,
         uint256 _totalAmount,
         uint256 _interestRate,
-        uint8 _noOfInstalments
+        uint16 _noOfInstalments
     ) {
         deployer = _msgSender();
         borrower = _borrower;
@@ -74,11 +74,16 @@ contract Lend is Context {
         DealDetials storage dealDetails = deal;
 
         require(dealDetails.noOfInstalments <= 0, "ERR:NM"); // NM => No more installments
+        require(
+            dealDetails.amountPaidTotal < dealDetails.totalAmount,
+            "ERR:NM"
+        ); // NM => No more installments
 
         uint256 value = msg.value;
         uint256 interestAmt = (dealDetails.instalmentAmt *
             dealDetails.interestRate);
-        require(value == dealDetails.instalmentAmt + interestAmt, "ERR:WV"); // WV => Wrong value
+        uint256 totalAmount = dealDetails.instalmentAmt + interestAmt;
+        require(value == totalAmount, "ERR:WV"); // WV => Wrong value
 
         if (dealDetails.addedInstalments) {
             uint256 amtToLeder = dealDetails.instalmentAmt +
@@ -93,7 +98,7 @@ contract Lend is Context {
             );
             require(successInBorrower, "ERR:OT"); //OT => On Transfer
         } else {
-            uint256 amtToLenderOnly = dealDetails.instalmentAmt + interestAmt;
+            uint256 amtToLenderOnly = totalAmount;
 
             (bool success, ) = lender.call{value: amtToLenderOnly}("");
             require(success, "ERR:OT"); //OT => On Transfer
@@ -103,24 +108,24 @@ contract Lend is Context {
         --dealDetails.noOfInstalments;
     }
 
-    function requestNoOfInstalment(uint8 noOfAddInstalments)
-        external
+    function requestNoOfInstalment(uint16 noOfAddInstalments)
+        public view
         onlyBorrower
     {
         require(noOfAddInstalments >= 3, "ERR:MR"); // MR => Minimum required no of instalments
 
-        acceptRequestOfInstalment(noOfAddInstalments);
+        // emit event
     }
 
     function acceptRequestOfInstalment(
-        uint8 _noOfAddInstalments,
-        uint8 _interestRate
+        uint16 _noOfAddInstalments,
+        uint256 _interestRate
     ) external onlyLender {
         DealDetials storage dealDetails = deal;
 
         dealDetails.noOfInstalments += _noOfAddInstalments;
         dealDetails.interestRate = _interestRate;
 
-        deal.addedInstalments = true;
+        dealDetails.addedInstalments = true;
     }
 }
