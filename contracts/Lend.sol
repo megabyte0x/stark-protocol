@@ -14,6 +14,7 @@ contract Lend is Context {
         uint256 instalmentAmt; // * Amount to be paid per insalment
         uint256 timeRentedSince; // * Time when the deal started
         uint256 interestRate; // * Interest rate decided by the lender.
+        uint256 addedInterestRate; // * Additional Interest Rate for additional no. of instalments.
         uint16 noOfInstalments; // * No of instalments in which borrower will pay amount
         bool addedInstalments; // * If borrower got more instalments after request.
     }
@@ -102,17 +103,34 @@ contract Lend is Context {
         ); // NM => No more installments
 
         uint256 value = msg.value;
+
         uint256 interestAmt = (dealDetails.instalmentAmt *
             dealDetails.interestRate);
-        uint256 totalAmount = dealDetails.instalmentAmt + interestAmt;
-        require(value == totalAmount, "ERR:WV"); // WV => Wrong value
+
+        // * amtToLenderOnly: Amount with standard interest
+        uint256 amtToLenderOnly = dealDetails.instalmentAmt + interestAmt;
 
         if (dealDetails.addedInstalments) {
-            uint256 amtToLeder = dealDetails.instalmentAmt +
-                (interestAmt * 95 * 10**16);
-            uint256 amtToProtocol = interestAmt * 5 * 10**16;
+            // * totalInterestedAmount: Amount after additional interest is added
+            uint256 totalInterestedAmount = amtToLenderOnly +
+                (dealDetails.addedInterestRate * dealDetails.instalmentAmt);
 
-            (bool successInLender, ) = lender.call{value: amtToLeder}("");
+            require(value == totalInterestedAmount, "ERR:WV"); // WV => Wrong value
+
+            // * amtToLender: Amount after with 95% of additional interest is added
+            uint256 amtToLender = amtToLenderOnly +
+                (dealDetails.instalmentAmt *
+                    dealDetails.addedInterestRate *
+                    95 *
+                    10**16);
+
+            // * amtToProtocol: Amount after with 5% of additional interest is added
+            uint256 amtToProtocol = dealDetails.instalmentAmt *
+                dealDetails.addedInterestRate *
+                5 *
+                10**16;
+
+            (bool successInLender, ) = lender.call{value: amtToLender}("");
             require(successInLender, "ERR:OT"); //OT => On Transfer
 
             (bool successInBorrower, ) = deployer.call{value: amtToProtocol}(
@@ -120,7 +138,7 @@ contract Lend is Context {
             );
             require(successInBorrower, "ERR:OT"); //OT => On Transfer
         } else {
-            uint256 amtToLenderOnly = totalAmount;
+            require(value == amtToLenderOnly, "ERR:WV"); // WV => Wrong value
 
             (bool success, ) = lender.call{value: amtToLenderOnly}("");
             require(success, "ERR:OT"); //OT => On Transfer
@@ -132,7 +150,7 @@ contract Lend is Context {
 
     // * FUNCTION: Request the Lender for more instalments
     function requestNoOfInstalment(uint16 noOfAddInstalments)
-        public
+        external
         view
         onlyBorrower
     {
@@ -149,7 +167,7 @@ contract Lend is Context {
         DealDetials storage dealDetails = deal;
 
         dealDetails.noOfInstalments += _noOfAddInstalments;
-        dealDetails.interestRate = _interestRate;
+        dealDetails.addedInterestRate = _interestRate;
 
         dealDetails.addedInstalments = true;
     }
