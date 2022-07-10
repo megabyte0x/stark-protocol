@@ -51,6 +51,26 @@ contract Lend is Context {
         _;
     }
 
+    // * FUNCTION: To get the Instalment Amount
+    function getInstalmentAmount() public view returns (uint256) {
+        return deal.instalmentAmt;
+    }
+
+    // * FUNCTION: To get the number of instalments
+    function getNoOfInstalments() public view returns (uint16) {
+        return deal.noOfInstalments;
+    }
+
+    // * FUNCTION: To get the total amount owed
+    function getTotalAmountOwed() public view returns (uint256) {
+        return deal.totalAmount;
+    }
+
+    // * FUNCTION: To get the interest rate
+    function getInterestRate() public view returns (uint256) {
+        return deal.interestRate;
+    }
+
     // * FUNCTION: Pay the amount left at once
     function payAtOnce() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
@@ -110,10 +130,10 @@ contract Lend is Context {
         --dealDetails.noOfInstalments;
     }
 
-
     // * FUNCTION: Request the Lender for more instalments
     function requestNoOfInstalment(uint16 noOfAddInstalments)
-        public view
+        public
+        view
         onlyBorrower
     {
         require(noOfAddInstalments >= 3, "ERR:MR"); // MR => Minimum required no of instalments
