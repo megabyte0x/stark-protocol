@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 
-contract Lend is Context {
+contract Deal is Context {
     address private deployer;
     address private borrower;
     address private lender;

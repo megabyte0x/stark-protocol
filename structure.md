@@ -2,7 +2,7 @@
 
 There are two contracts as of now=>
 
-- ## `Lend.sol`
+- ## `Deal.sol`
 **This is the main contract handling all the transactions functionality.**
 - ### Functions
     * `getBorrower()` => To get the address of the Borrower.
