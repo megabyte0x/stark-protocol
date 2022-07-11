@@ -1,27 +1,27 @@
 //SPDX-License-Identifier: Unlicense
 
-// import "@openzeppelin/contracts/utils/Create2.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
 import "contracts/Deal.sol";
 
-contract Deployer {
-    event Deploy(address addr);
-
+contract Deployer is Context {
     Deal public dealContract;
 
-   struct Request {
+    struct Request {
         address borrower;
         address lender;
         uint256 instalmentAmount;
         uint256 totalAmount;
         uint256 interestRate;
         uint16 noOfInstalments;
-    }   
+        bool requestRaised;
+    }
 
     Request private request;
 
-    function deploy() external returns (Deal) {
+    mapping(address => Request) requests;
 
-        Request storage requestDetails = request; 
+    function deploy() external returns (Deal) {
+        Request storage requestDetails = request;
 
         dealContract = new Deal(
             requestDetails.borrower,
@@ -32,6 +32,30 @@ contract Deployer {
             requestDetails.noOfInstalments
         );
         return (dealContract);
+
+        // emit Event
     }
 
+    function raiseRequest(
+        uint256 _instalmentAmount,
+        uint256 _totalAmount,
+        uint256 _interestRate,
+        uint16 _noOfInstalments,
+        address _lender
+    ) external {
+        require(!requests[_msgSender()].requestRaised, "ERR:AR"); // AR => Already raised
+
+        Request storage requestDetails = request;
+
+        requestDetails.borrower = _msgSender();
+        requestDetails.lender = _lender;
+        requestDetails.instalmentAmount = _instalmentAmount;
+        requestDetails.totalAmount = _totalAmount;
+        requestDetails.interestRate = _interestRate;
+        requestDetails.noOfInstalments = _noOfInstalments;
+
+        requests[_msgSender()].requestRaised = true;
+
+        // emit event
+    }
 }
