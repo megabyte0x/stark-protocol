@@ -1,4 +1,5 @@
 //SPDX-License-Identifier: Unlicense
+pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 import "contracts/Deal.sol";
@@ -19,7 +20,7 @@ contract Deployer is Context {
 
     Request private request;
 
-    mapping(address => Request) requests;
+    mapping(address => Request) public requests;
 
     function deploy() internal {
         Request storage requestDetails = request;
