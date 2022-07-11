@@ -9,6 +9,7 @@ contract Deployer is Context {
     struct Request {
         address borrower;
         address lender;
+        address dealAddress;
         uint256 instalmentAmount;
         uint256 totalAmount;
         uint256 interestRate;
@@ -20,7 +21,7 @@ contract Deployer is Context {
 
     mapping(address => Request) requests;
 
-    function deploy() external returns (Deal) {
+    function deploy() internal {
         Request storage requestDetails = request;
 
         dealContract = new Deal(
@@ -31,7 +32,8 @@ contract Deployer is Context {
             requestDetails.interestRate,
             requestDetails.noOfInstalments
         );
-        return (dealContract);
+
+        requestDetails.dealAddress = address(dealContract);
 
         // emit Event
     }
@@ -57,5 +59,17 @@ contract Deployer is Context {
         requests[_msgSender()].requestRaised = true;
 
         // emit event
+    }
+
+    function acceptRequest(address _lender) external payable {
+        require(requests[_lender].requestRaised, "ERR:NR"); // NR => No request
+
+        uint256 value = msg.value;
+        require(requests[_lender].totalAmount == value, "ERR:WV"); // WV => Wrong Value
+
+        deploy();
+
+        (bool success, ) = _lender.call{value: value}("");
+        require(success, "ERR:OT"); // OT => On Transfer
     }
 }
