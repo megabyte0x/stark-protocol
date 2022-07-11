@@ -52,6 +52,16 @@ contract Lend is Context {
         _;
     }
 
+    // * FUNCTION: To get the address of the borrower.
+    function getBorrower() public view returns (address) {
+        return borrower;
+    }
+
+    // * FUNCTION: To get the address of the lender.
+    function getLender() public view returns (address) {
+        return lender;
+    }
+
     // * FUNCTION: To get the Instalment Amount
     function getInstalmentAmount() public view returns (uint256) {
         return deal.instalmentAmt;
@@ -93,7 +103,7 @@ contract Lend is Context {
     }
 
     // * FUNCTION: Pay the pre-defined amount in instalments not necessarily periodically.
-    function payInInstallment() external payable onlyBorrower {
+    function payInInstalment() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
 
         require(dealDetails.noOfInstalments <= 0, "ERR:NM"); // NM => No more installments
