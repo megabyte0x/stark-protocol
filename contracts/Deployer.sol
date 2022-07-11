@@ -4,8 +4,14 @@ pragma solidity ^0.8.15;
 import "@openzeppelin/contracts/utils/Context.sol";
 import "contracts/Deal.sol";
 
-contract Deployer is Context {
-    Deal public dealContract;
+contract deployer_contract is Context {
+    deal_contract public dealContract;
+
+    address private owner;
+
+    constructor () {
+        owner = _msgSender();
+    }
 
     struct Request {
         address borrower;
@@ -25,7 +31,7 @@ contract Deployer is Context {
     function deploy() internal {
         Request storage requestDetails = request;
 
-        dealContract = new Deal(
+        dealContract = new deal_contract(
             requestDetails.borrower,
             requestDetails.lender,
             requestDetails.instalmentAmount,
