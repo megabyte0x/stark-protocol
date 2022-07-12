@@ -10,6 +10,7 @@ contract deal_contract is Context {
 
     struct DealDetials {
         uint256 totalAmount; // * Total amount borrowed by the borrower
+        uint256 totalAmountToPay; // * Total amount including interest left to be paid
         uint256 amountPaidTotal; // * Amount paid by the borrower in total
         uint256 instalmentAmt; // * Amount to be paid per insalment
         uint256 timeRentedSince; // * Time when the deal started
@@ -35,11 +36,12 @@ contract deal_contract is Context {
 
         DealDetials storage dealDetails = deal;
 
-        dealDetails.instalmentAmt = _instalmentAmount;
         dealDetails.noOfInstalments = _noOfInstalments;
         dealDetails.totalAmount = _totalAmount;
         dealDetails.interestRate = _interestRate;
         dealDetails.timeRentedSince = uint256(block.timestamp);
+        dealDetails.instalmentAmt = getInstalmentAmount(_instalmentAmount);
+        dealDetails.totalAmountToPay = _totalAmount + dealDetails.instalmentAmt;
     }
 
     modifier onlyBorrower() {
@@ -62,9 +64,23 @@ contract deal_contract is Context {
         return lender;
     }
 
+    // * FUNCTION: To get the detials of the Deal.
+    function getDealDetails() public view returns (DealDetials memory) {
+        return deal;
+    }
+
     // * FUNCTION: To get the Instalment Amount
-    function getInstalmentAmount() public view returns (uint256) {
-        return deal.instalmentAmt;
+    function getInstalmentAmount(uint256 _instalmentAmount)
+        public
+        view
+        returns (uint256)
+    {
+        DealDetials storage dealDetails = deal;
+        uint256 interestAmount = (_instalmentAmount *
+            dealDetails.interestRate) / (dealDetails.noOfInstalments * 100);
+
+        uint256 instalmentAmount = _instalmentAmount + interestAmount;
+        return instalmentAmount;
     }
 
     // * FUNCTION: To get the number of instalments
@@ -75,6 +91,11 @@ contract deal_contract is Context {
     // * FUNCTION: To get the total amount owed
     function getTotalAmountOwed() public view returns (uint256) {
         return deal.totalAmount;
+    }
+
+    // * FUNCTION: To get the amount left to be paid
+    function getTotalAmountLeft() public view returns (uint256) {
+        return deal.totalAmountToPay;
     }
 
     // * FUNCTION: To get the interest rate
@@ -92,21 +113,21 @@ contract deal_contract is Context {
         ); // NM => No more installments
 
         uint256 value = msg.value;
-        uint256 amountLeftToPay = dealDetails.totalAmount -
-            dealDetails.amountPaidTotal;
+        uint256 amountLeftToPay = getTotalAmountLeft();
         require(value == amountLeftToPay, "ERR:WV"); // WV => Wrong value
 
         (bool success, ) = lender.call{value: value}("");
         require(success, "ERR:OT"); //OT => On Trnasfer
 
         dealDetails.amountPaidTotal += value;
+        dealDetails.totalAmountToPay -= value;
     }
 
     // * FUNCTION: Pay the pre-defined amount in instalments not necessarily periodically.
     function payInInstalment() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
 
-        require(dealDetails.noOfInstalments <= 0, "ERR:NM"); // NM => No more installments
+        require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
         require(
             dealDetails.amountPaidTotal < dealDetails.totalAmount,
             "ERR:NM"
@@ -114,11 +135,8 @@ contract deal_contract is Context {
 
         uint256 value = msg.value;
 
-        uint256 interestAmt = (dealDetails.instalmentAmt *
-            dealDetails.interestRate);
-
         // * amtToLenderOnly: Amount with standard interest
-        uint256 amtToLenderOnly = dealDetails.instalmentAmt + interestAmt;
+        uint256 amtToLenderOnly = dealDetails.instalmentAmt;
 
         if (dealDetails.addedInstalments) {
             // * totalInterestedAmount: Amount after additional interest is added
@@ -155,6 +173,7 @@ contract deal_contract is Context {
         }
 
         dealDetails.amountPaidTotal += value;
+        dealDetails.totalAmountToPay -= value;
         --dealDetails.noOfInstalments;
     }
 
