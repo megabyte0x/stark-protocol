@@ -62,9 +62,9 @@ contract deployer_contract is Context {
         requestDetails.totalAmount = _totalAmount;
         requestDetails.interestRate = _interestRate;
         requestDetails.noOfInstalments = _noOfInstalments;
+        requestDetails.requestRaised = true;
 
-        requests[_msgSender()].requestRaised = true;
-
+        requests[_msgSender()] = requestDetails;
         // emit event
     }
 
