@@ -22,6 +22,14 @@ contract deal_contract is Context {
 
     DealDetials private deal;
 
+    struct AdditionalRequest {
+        uint16 noOfInstalments; // * No of additional instalments
+        uint256 interestRate;   // * Interest Rate
+        bool isAccepted;        // * Request Accepted or Not
+    }
+
+    mapping(address => AdditionalRequest) additionRequest;
+
     constructor(
         address _borrower,
         address _lender,
@@ -178,26 +186,35 @@ contract deal_contract is Context {
     }
 
     // * FUNCTION: Request the Lender for more instalments
-    function requestNoOfInstalment(uint16 noOfAddInstalments)
-        external
-        view
-        onlyBorrower
-    {
+    function requestNoOfInstalment(
+        uint16 noOfAddInstalments,
+        uint256 _interestRate
+    ) external onlyBorrower {
         require(noOfAddInstalments >= 3, "ERR:MR"); // MR => Minimum required no of instalments
+
+        additionRequest[_msgSender()] = AdditionalRequest(
+            noOfAddInstalments,
+            _interestRate,
+            false
+        );
 
         // emit event
     }
 
     // * FUNCTION: Accept the request made the Lender for more instalments
     function acceptRequestOfInstalment(
+        address _borrower,
         uint16 _noOfAddInstalments,
         uint256 _interestRate
     ) external onlyLender {
+        require(!additionRequest[_borrower].isAccepted, "ERR:AA"); // AA => Already Accepted
+
+        additionRequest[_borrower].isAccepted = true;
+
         DealDetials storage dealDetails = deal;
 
         dealDetails.noOfInstalments += _noOfAddInstalments;
         dealDetails.addedInterestRate = _interestRate;
-
         dealDetails.addedInstalments = true;
     }
 }
