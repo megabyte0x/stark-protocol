@@ -14,20 +14,22 @@ contract deployer_contract is Context {
     }
 
     struct Request {
-        address borrower;
-        address lender;
-        address dealAddress;
-        uint256 instalmentAmount;
-        uint256 totalAmount;
-        uint256 interestRate;
-        uint16 noOfInstalments;
-        bool requestRaised;
+        address borrower; // * Address of the borrower
+        address lender; // * Address of the Lender
+        address dealAddress; // * Address of the Deal Contract
+        uint256 instalmentAmount; //* Amount to be paid in each instalment
+        uint256 totalAmount; // * Total Amount borrowed
+        uint256 interestRate; // * Interest Rate by the Lender
+        uint16 noOfInstalments; // * No of Instalments
+        bool requestAccepted; // * Request Raised by the lender or not
     }
 
     Request private request;
 
+    // * To store all the requests made in the protocol
     mapping(address => Request) public requests;
 
+    // * To deploy the Deal Contract
     function deploy() internal {
         Request storage requestDetails = request;
 
@@ -47,6 +49,7 @@ contract deployer_contract is Context {
         // emit Event to notify both lender and borrower
     }
 
+    // * To raise the request to borrow
     function raiseRequest(
         uint256 _instalmentAmount,
         uint256 _totalAmount,
@@ -54,7 +57,7 @@ contract deployer_contract is Context {
         uint16 _noOfInstalments,
         address _lender
     ) external {
-        require(!requests[_msgSender()].requestRaised, "ERR:AR"); // AR => Already raised
+        require(!requests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
         Request storage requestDetails = request;
 
@@ -64,23 +67,26 @@ contract deployer_contract is Context {
         requestDetails.totalAmount = _totalAmount;
         requestDetails.interestRate = _interestRate;
         requestDetails.noOfInstalments = _noOfInstalments;
-        requestDetails.requestRaised = true;
 
         requests[_msgSender()] = requestDetails;
+        
         // emit event to notify lender
     }
 
+    // * To accept the request made by the borrower
     function acceptRequest(address _borrower) external payable {
-        require(requests[_borrower].requestRaised, "ERR:NR"); // NR => No request
+        require(!requests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
         uint256 value = msg.value;
         require(requests[_borrower].totalAmount == value, "ERR:WV"); // WV => Wrong Value
+
+        requests[_borrower].requestAccepted = true;
 
         deploy();
 
         (bool success, ) = _borrower.call{value: value}("");
         require(success, "ERR:OT"); // OT => On Transfer
 
-        // emit event to notify borrower 
+        // emit event to notify borrower
     }
 }
