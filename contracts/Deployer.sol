@@ -9,7 +9,7 @@ contract deployer_contract is Context {
 
     address private owner;
 
-    constructor () {
+    constructor() {
         owner = _msgSender();
     }
 
@@ -40,9 +40,11 @@ contract deployer_contract is Context {
             requestDetails.noOfInstalments
         );
 
-        requestDetails.dealAddress = address(dealContract);
+        requests[requestDetails.borrower].dealAddress = address(dealContract);
 
-        // emit Event
+        delete request;
+
+        // emit Event to notify both lender and borrower
     }
 
     function raiseRequest(
@@ -65,7 +67,7 @@ contract deployer_contract is Context {
         requestDetails.requestRaised = true;
 
         requests[_msgSender()] = requestDetails;
-        // emit event
+        // emit event to notify lender
     }
 
     function acceptRequest(address _borrower) external payable {
@@ -78,5 +80,7 @@ contract deployer_contract is Context {
 
         (bool success, ) = _borrower.call{value: value}("");
         require(success, "ERR:OT"); // OT => On Transfer
+
+        // emit event to notify borrower 
     }
 }
