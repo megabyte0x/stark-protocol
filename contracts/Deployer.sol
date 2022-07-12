@@ -2,10 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "contracts/Deal.sol";
+import "./Deal.sol";
 
 contract deployer_contract is Context {
-    deal_contract public dealContract;
+    deal_contract private dealContract;
 
     address private owner;
 
@@ -27,7 +27,15 @@ contract deployer_contract is Context {
     Request private request;
 
     // * To store all the requests made in the protocol
-    mapping(address => Request) public requests;
+    mapping(address => Request) private requests;
+
+    function getRequests(address _borrower)
+        external
+        view
+        returns (Request memory)
+    {
+        return requests[_borrower];
+    }
 
     // * To deploy the Deal Contract
     function deploy() internal {
@@ -69,7 +77,7 @@ contract deployer_contract is Context {
         requestDetails.noOfInstalments = _noOfInstalments;
 
         requests[_msgSender()] = requestDetails;
-        
+
         // emit event to notify lender
     }
 
