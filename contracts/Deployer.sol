@@ -68,15 +68,15 @@ contract deployer_contract is Context {
         // emit event
     }
 
-    function acceptRequest(address _lender) external payable {
-        require(requests[_lender].requestRaised, "ERR:NR"); // NR => No request
+    function acceptRequest(address _borrower) external payable {
+        require(requests[_borrower].requestRaised, "ERR:NR"); // NR => No request
 
         uint256 value = msg.value;
-        require(requests[_lender].totalAmount == value, "ERR:WV"); // WV => Wrong Value
+        require(requests[_borrower].totalAmount == value, "ERR:WV"); // WV => Wrong Value
 
         deploy();
 
-        (bool success, ) = _lender.call{value: value}("");
+        (bool success, ) = _borrower.call{value: value}("");
         require(success, "ERR:OT"); // OT => On Transfer
     }
 }
