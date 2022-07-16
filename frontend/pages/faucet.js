@@ -104,7 +104,7 @@ export default function faucet() {
                             <div>Loading....</div>
                         )
                     ) : (
-                        <div>Plz Connect to Rinkeby testnet</div>
+                        <div>Plz Connect to Polygon Mumbai testnet</div>
                     )}
                 </div>
             ) : (

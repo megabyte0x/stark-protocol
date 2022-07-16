@@ -14,7 +14,7 @@ export default function Header() {
                 <Link href="/faucet">
                     <a className="mr-3 p-6">Faucet</a>
                 </Link>
-                <Link href="/faucet">
+                <Link href="/chat">
                     <a className="mr-3 p-6">Chat</a>
                 </Link>
                 <ConnectButton moralisAuth={true} />
