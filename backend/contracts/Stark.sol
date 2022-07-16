@@ -50,6 +50,11 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address indexed userAddress,
         uint256 indexed amount
     );
+    event Guaranteed(
+        address indexed userAddress,
+        address indexed friendAddress,
+        bool indexed reponse
+    );
 
     //////////////////////
     /////  mappings  /////
@@ -72,6 +77,9 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
     // userAddress -> all of his unique borrowed tokens
     mapping(address => address[]) private s_borrowerUniqueTokens;
+
+    // userAddress & friend address => their guaranties
+    mapping(address => mapping(address => bool)) private s_guarantees;
 
     /////////////////////
     ///   Modifiers   ///
@@ -224,6 +232,32 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
                 }
             }
         }
+    }
+
+    // * FUNCTION: To allow guarantee requests to be sent
+    function allowGuarantee(address friendAddress) external {
+        s_guarantees[msg.sender][friendAddress] = true;
+        emit Guaranteed(msg.sender, friendAddress, true);
+    }
+
+    // * FUNCTION: To disallow guarantee requests to be sent
+    function disAllowGuarantee(address friendAddress) external {
+        s_guarantees[msg.sender][friendAddress] = false;
+        emit Guaranteed(msg.sender, friendAddress, false);
+    }
+
+    // PS: change the name guarantee to something else if you don't like
+
+    function noCollateralBorrow(address friendAddress) external {
+        // use table land to store data of all users who have guarantee
+        // then use query to read data to find if this msg.sender have guantees or if have then 
+        // take allower address and borrower address from table and update their balance accordingly
+        hasGuaranty();
+
+    }
+
+    function hasGuaranty() public {
+        // read from database and check if allowed
     }
 
     // * FUNCTION: TO charge APY on borrowings
