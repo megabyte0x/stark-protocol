@@ -76,7 +76,7 @@ export default function faucet() {
     }
 
     useEffect(() => {
-        if (isWeb3Enabled && chainId == 4) {
+        if (isWeb3Enabled && chainId == 80001) {
             updateUI();
             console.log("Updating UI!");
         }
@@ -86,7 +86,7 @@ export default function faucet() {
         <div>
             {isWeb3Enabled ? (
                 <div>
-                    {chainId == 4 ? (
+                    {chainId == 80001 ? (
                         !isLoading ? (
                             <div className="p-4 ">
                                 <div className="p-6 font-semibold text-3xl text-gray-500">
