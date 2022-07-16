@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import '../styles/globals.css'
-
-function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
-}
-
-export default MyApp
-=======
 import "../styles/globals.css";
 import Header from "../components/Header";
 import { MoralisProvider } from "react-moralis";
@@ -39,4 +30,3 @@ function MyApp({ Component, pageProps }) {
 }
 
 export default MyApp;
->>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a

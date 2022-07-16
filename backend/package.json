@@ -1,26 +1,4 @@
 {
-<<<<<<< HEAD
-  "name": "friends_indeed",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@openzeppelin/contracts": "^4.7.0",
-    "dotenv": "^16.0.1",
-    "hardhat": "^2.9.9"
-  },
-  "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.6",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "chai": "^4.3.6",
-    "ethereum-waffle": "^3.4.4",
-    "ethers": "^5.6.9"
-=======
   "scripts": {
     "local-deploy": "hardhat deploy --network localhost",
     "ganache": "ganache --wallet.seed myCustomSeed",
@@ -48,6 +26,5 @@
   "dependencies": {
     "@chainlink/contracts": "^0.4.1",
     "@openzeppelin/contracts": "^4.6.0"
->>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a
   }
 }

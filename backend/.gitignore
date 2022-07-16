@@ -1,14 +1,5 @@
 node_modules
 .env
-<<<<<<< HEAD
-coverage
-coverage.json
-typechain
-
-#Hardhat files
-cache
-artifacts
-=======
 artifacts
 cache
 .vscode
@@ -17,4 +8,3 @@ gas-report.txt
 coverage
 .notes.md
 coverage.json
->>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a

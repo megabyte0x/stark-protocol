@@ -1,20 +1,4 @@
 require("@nomiclabs/hardhat-waffle");
-<<<<<<< HEAD
-require("dotenv").config();
-
-const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
-
-const POLYGON_PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY;
-
-module.exports = {
-  solidity: "0.8.15",
-  networks: {
-    polygon: {
-      url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-      accounts: [POLYGON_PRIVATE_KEY]
-    }
-  }
-=======
 require("@nomiclabs/hardhat-etherscan");
 require("hardhat-deploy");
 require("solidity-coverage");
@@ -105,5 +89,4 @@ module.exports = {
     mocha: {
         timeout: 200000, // 200 seconds max for running tests
     },
->>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a
 };

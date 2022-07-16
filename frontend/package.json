@@ -9,18 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@rainbow-me/rainbowkit": "^0.4.2",
-    "ethers": "^5.6.9",
-    "next": "12.2.2",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "wagmi": "^0.5.9"
-  },
-  "devDependencies": {
-    "eslint": "8.19.0",
-    "eslint-config-next": "12.2.2"
-=======
     "moralis": "^1.8.1",
     "next": "12.1.6",
     "react": "18.1.0",
@@ -36,6 +24,5 @@
     "ethers": "^5.6.9",
     "postcss": "^8.4.14",
     "tailwindcss": "^3.1.2"
->>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a
   }
 }
