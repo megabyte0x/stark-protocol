@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 html,
 body {
   padding: 0;
@@ -13,4 +14,18 @@ a {
 
 * {
   box-sizing: border-box;
+=======
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  h1 {
+    @apply text-3xl;
+  }
+  h2 {
+    @apply text-xl;
+  }
+  /* ... */
+>>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a
 }

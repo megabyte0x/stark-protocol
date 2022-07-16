@@ -1,5 +1,6 @@
 node_modules
 .env
+<<<<<<< HEAD
 coverage
 coverage.json
 typechain
@@ -7,3 +8,13 @@ typechain
 #Hardhat files
 cache
 artifacts
+=======
+artifacts
+cache
+.vscode
+deployments
+gas-report.txt
+coverage
+.notes.md
+coverage.json
+>>>>>>> 6086ce81accc56b02047c58d3ba39511eb3cea6a
