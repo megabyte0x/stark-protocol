@@ -30,7 +30,6 @@ abstract contract Context {
 
 // File contracts/Deal.sol
 
-//SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.15;
 
 contract deal_contract is Context {
@@ -252,7 +251,6 @@ contract deal_contract is Context {
 
 // File contracts/Deployer.sol
 
-//SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.15;
 
 
