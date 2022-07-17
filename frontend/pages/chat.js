@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMoralis } from "react-moralis";
-import Conversation from "../components/conversation";
+import Auth from "../components/Auth";
 
 export default function Chat() {
     const [isLoading, setIsLoading] = useState(false);
@@ -13,7 +13,7 @@ export default function Chat() {
                     {chainId == 80001 ? (
                         !isLoading ? (
                             <div>
-                            <Conversation/>
+                            <Auth/>
                             </div>
                         ) : (
                             <div>Loading....</div>
