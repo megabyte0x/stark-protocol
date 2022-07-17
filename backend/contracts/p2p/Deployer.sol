@@ -13,7 +13,7 @@ contract deployer_contract is Context {
         owner = _msgSender();
     }
 
-    struct Request {
+    struct p2pRequest {
         address borrower; // * Address of the borrower
         address lender; // * Address of the Lender
         address dealAddress; // * Address of the Deal Contract
@@ -24,22 +24,18 @@ contract deployer_contract is Context {
         bool requestAccepted; // * Request Raised by the lender or not
     }
 
-    Request private request;
+    p2pRequest private p2pRequest;
 
-    // * To store all the requests made in the protocol
-    mapping(address => Request) private requests;
+    // * To store all the p2pRequests made in the protocol
+    mapping(address => p2pRequest) private p2pRequests;
 
-    function getRequests(address _borrower)
-        external
-        view
-        returns (Request memory)
-    {
-        return requests[_borrower];
+    function getRequests(address _borrower) external view returns (p2pRequest memory) {
+        return p2pRequests[_borrower];
     }
 
     // * To deploy the Deal Contract
-    function deploy() internal {
-        Request storage requestDetails = request;
+    function p2pDeploy() internal {
+        p2pRequest storage requestDetails = p2pRequest;
 
         dealContract = new deal_contract(
             requestDetails.borrower,
@@ -50,24 +46,24 @@ contract deployer_contract is Context {
             requestDetails.noOfInstalments
         );
 
-        requests[requestDetails.borrower].dealAddress = address(dealContract);
+        p2pRequests[requestDetails.borrower].dealAddress = address(dealContract);
 
-        delete request;
+        delete p2pRequest;
 
         // emit Event to notify both lender and borrower
     }
 
-    // * To raise the request to borrow
-    function raiseRequest(
+    // * To raise the p2pRequest to borrow
+    function p2pRaiseRequest(
         uint256 _instalmentAmount,
         uint256 _totalAmount,
         uint256 _interestRate,
         uint16 _noOfInstalments,
         address _lender
     ) external {
-        require(!requests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
+        require(!p2pRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        Request storage requestDetails = request;
+        p2pRequest storage requestDetails = p2pRequest;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -76,19 +72,19 @@ contract deployer_contract is Context {
         requestDetails.interestRate = _interestRate;
         requestDetails.noOfInstalments = _noOfInstalments;
 
-        requests[_msgSender()] = requestDetails;
+        p2pRequests[_msgSender()] = requestDetails;
 
         // emit event to notify lender
     }
 
-    // * To accept the request made by the borrower
-    function acceptRequest(address _borrower) external payable {
-        require(!requests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
+    // * To accept the p2pRequest made by the borrower
+    function p2pAcceptRequest(address _borrower) external payable {
+        require(!p2pRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
         uint256 value = msg.value;
-        require(requests[_borrower].totalAmount == value, "ERR:WV"); // WV => Wrong Value
+        require(p2pRequests[_borrower].totalAmount == value, "ERR:WV"); // WV => Wrong Value
 
-        requests[_borrower].requestAccepted = true;
+        p2pRequests[_borrower].requestAccepted = true;
 
         deploy();
 
