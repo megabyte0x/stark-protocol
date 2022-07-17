@@ -21,21 +21,39 @@ contract deployer_contract is Context {
         uint256 totalAmount; // * Total Amount borrowed
         uint256 interestRate; // * Interest Rate by the Lender
         uint16 noOfInstalments; // * No of Instalments
-        bool requestAccepted; // * Request Raised by the lender or not
+        bool requestAccepted; // * Request Raised by the lender accepted or not
     }
 
-    p2pRequest private p2pRequest;
+    p2pRequest private p2pRequestInstance;
 
     // * To store all the p2pRequests made in the protocol
     mapping(address => p2pRequest) private p2pRequests;
 
-    function getRequests(address _borrower) external view returns (p2pRequest memory) {
+    struct guranteeRequest {
+        address borrower; // * Address of the borrower
+        address lender; // * Address of the Lender
+        uint256 totalAmount; // * Amount looking for the gurantee
+        bool requestAccepted; // * Request Raised by the lender accepted or not
+    }
+
+    guranteeRequest private guranteeRequestInstance;
+
+    // * To store all the guranteeRequest made in the protocol
+    mapping(address => guranteeRequest) private guranteeRequests;
+
+    // * FUNCTION: To get the p2pRequests made by a particualr address
+    function getP2PRequests(address _borrower) external view returns (p2pRequest memory) {
         return p2pRequests[_borrower];
     }
 
-    // * To deploy the Deal Contract
+    // * FUNCTION: To get the p2pRequests made by a particualr address
+    function getGuranteeRequests(address _borrower) external view returns (p2pRequest memory) {
+        return guranteeRequests[_borrower];
+    }
+
+    // * FUNCTION: To deploy the Deal Contract
     function p2pDeploy() internal {
-        p2pRequest storage requestDetails = p2pRequest;
+        p2pRequest storage requestDetails = p2pRequestInstance;
 
         dealContract = new deal_contract(
             requestDetails.borrower,
@@ -53,7 +71,7 @@ contract deployer_contract is Context {
         // emit Event to notify both lender and borrower
     }
 
-    // * To raise the p2pRequest to borrow
+    // * FUNCTION: To raise the p2pRequest to borrow
     function p2pRaiseRequest(
         uint256 _instalmentAmount,
         uint256 _totalAmount,
@@ -63,7 +81,7 @@ contract deployer_contract is Context {
     ) external {
         require(!p2pRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        p2pRequest storage requestDetails = p2pRequest;
+        p2pRequest storage requestDetails = p2pRequestInstance;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -77,7 +95,22 @@ contract deployer_contract is Context {
         // emit event to notify lender
     }
 
-    // * To accept the p2pRequest made by the borrower
+    // * FUNCTION: To raise the request for backing the loan from the protocol
+    function guaranteeRaiseRequest(uint256 _totalAmount, address _lender) external {
+        require(!guranteeRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
+
+        guranteeRequest storage requestDetails = guranteeRequestInstance;
+
+        requestDetails.borrower = _msgSender();
+        requestDetails.lender = _lender;
+        requestDetails.totalAmount = _totalAmount;
+
+        guranteeRequests[_msgSender()] = requestDetails;
+
+        // emit event to notify lender
+    }
+
+    // * FUNCTION: To accept the p2pRequest made by the borrower
     function p2pAcceptRequest(address _borrower) external payable {
         require(!p2pRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
@@ -93,4 +126,14 @@ contract deployer_contract is Context {
 
         // emit event to notify borrower
     }
+
+    // * FUNCTION: To accept the guranteeRequest made by the borrower
+    function guranteeAcceptRequest (address _borrower) external {
+        require(!guranteeRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
+
+        p2pRequests[_borrower].requestAccepted = true;
+
+        // emit event to notify borrower
+    }
+
 }
