@@ -2,7 +2,7 @@ import { Client } from "@xmtp/xmtp-js";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { useMoralis } from "react-moralis";
-import { Button, Input } from "web3uikit";
+import { Button, Input, Hero } from "web3uikit";
 
 export default function Conversation() {
     const { account, isWeb3Enabled } = useMoralis();
@@ -50,7 +50,31 @@ export default function Conversation() {
     return (
         <div>
             {!signed ? (
-                <div>
+                <div className="grid grid-cols-4 gap-8 content-start">
+                    <div
+                        style={{
+                            width: "50vh",
+                        }}
+                    >
+                        <div>
+                            <Hero
+                                align="left"
+                                height="750px"
+                                linearGradient="linear-gradient(113.54deg, rgba(60, 87, 140, 0.5) 14.91%, rgba(70, 86, 169, 0.5) 43.21%, rgba(125, 150, 217, 0.345) 44.27%, rgba(129, 161, 225, 0.185) 55.76%), linear-gradient(151.07deg, #141659 33.25%, #4152A7 98.24%)"
+                                textColor="#fff"
+                            />
+                        </div>
+                    </div>
+                    <div className="p-4">
+                        <Button
+                            id="test-button-primary"
+                            text="Add new conversation"
+                            theme="primary"
+                            type="button"
+                            size="large"
+                            isLoading={buttonDisabled}
+                        />
+                    </div>
                     <div className="absolute bottom-8 right-40">
                         <Input
                             label="Enter your message"
