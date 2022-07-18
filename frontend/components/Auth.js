@@ -14,6 +14,7 @@ export default function Auth() {
     const [conversation, setConversation] = useState();
     const [message, setMessage] = useState("");
     const [isFetching, setIsFetching] = useState(true);
+    const [targetValue, setTargetValue] = useState(message);
 
     async function sign() {
         setButtonDisabled(true);
@@ -30,16 +31,17 @@ export default function Auth() {
         try {
             if (!signed) return;
             const conversation = await xmtp.conversations.newConversation(address);
-            const messages = await conversation.messages();
             setConversation(conversation);
-            console.log(messages[0].content);
-            for (const message of messages) {
-                console.log(message.content);
-            }
         } catch (e) {
-            console.log("This error is coming from chat");
+            console.log("This error is coming from chat Auth component");
             console.log(e);
         }
+    }
+
+    async function handleSend() {
+        setTargetValue("")
+        await conversation.send(message);
+        await chat();
     }
 
     async function updateUI() {
@@ -55,9 +57,8 @@ export default function Auth() {
             {!signed ? (
                 <div className="flex justify-center p-12">
                     <Button
-                        id="test-button-primary"
                         onClick={sign}
-                        text="Start!"
+                        text="Sign"
                         theme="primary"
                         type="button"
                         size="large"
@@ -87,6 +88,9 @@ export default function Auth() {
                                         onChange={(e) => {
                                             setAddress(e.target.value);
                                         }}
+                                        onBlur={(e) => {
+                                            e.target.value = "";
+                                        }}
                                     />
                                 </div>
                                 <Button
@@ -101,7 +105,11 @@ export default function Auth() {
                         </div>
                     </div>
                     <div className="p-4">
-                        {conversation ? (<Messages address={address} conversation={conversation} />) : <div>Nothing</div>}
+                        {conversation ? (
+                            <Messages address={address} conversation={conversation} />
+                        ) : (
+                            <div></div>
+                        )}
                     </div>
                     <div className="absolute bottom-8 right-40">
                         <Input
@@ -112,6 +120,9 @@ export default function Auth() {
                             onChange={(e) => {
                                 setMessage(e.target.value);
                             }}
+                            onBlur={(e) => {
+                                e.target.value = "";
+                            }}
                         />
                     </div>
                     <div className="absolute bottom-8 right-12">
@@ -121,7 +132,7 @@ export default function Auth() {
                             theme="primary"
                             type="button"
                             size="large"
-                            onClick={() => conversation.send(message)}
+                            onClick={() => handleSend()}
                             isLoading={buttonDisabled}
                         />
                     </div>
