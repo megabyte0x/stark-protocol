@@ -2,17 +2,24 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "./p2p/Deal.sol";
-import "./guarantee/guarantee.sol";
+import "deal.sol";
+import "guaranty.sol";
+import "IStark.sol";
 
 contract deployer_contract is Context {
     deal_contract private dealContract;
-    guarantee_contract private guaranteeContract;
+    guaranty_contract private guarantyContract;
+    Istark_protocol starkContract;
 
     address private owner;
 
     constructor() {
         owner = _msgSender();
+    }
+
+    function setStarkAddress(address starkProtocolAddress) external {
+        require(_msgSender() == owner, "ERR:NA"); // NA=> Not Allowed
+        starkContract = Istark_protocol(starkProtocolAddress);
     }
 
     struct p2pRequest {
@@ -31,19 +38,20 @@ contract deployer_contract is Context {
     // * To store all the p2pRequests made in the protocol
     mapping(address => p2pRequest) private p2pRequests;
 
-    struct guranteeRequest {
+    struct guarantyRequest {
         address borrower; // * Address of the borrower
         address lender; // * Address of the Lender
         address dealAddress;
-        uint256 totalAmount; // * Amount looking for the gurantee
-        uint256 _timeRentedUntil;
+        address tokenAddress;
+        uint256 totalAmount; // * Amount looking for the guaranty
+        uint256 timeRentedUntil;
         bool requestAccepted; // * Request Raised by the lender accepted or not
     }
 
-    guranteeRequest private guranteeRequestInstance;
+    guarantyRequest private guarantyRequestInstance;
 
-    // * To store all the guranteeRequest made in the protocol
-    mapping(address => guranteeRequest) private guranteeRequests;
+    // * To store all the guarantyRequest made in the protocol
+    mapping(address => guarantyRequest) private guarantyRequests;
 
     // * FUNCTION: To get the p2pRequests made by a particualr address
     function getP2PRequests(address _borrower) external view returns (p2pRequest memory) {
@@ -51,8 +59,12 @@ contract deployer_contract is Context {
     }
 
     // * FUNCTION: To get the p2pRequests made by a particualr address
-    function getGuranteeRequests(address _borrower) external view returns (p2pRequest memory) {
-        return guranteeRequests[_borrower];
+    function getGuarantyRequests(address _borrower)
+        external
+        view
+        returns (guarantyRequest memory)
+    {
+        return guarantyRequests[_borrower];
     }
 
     // * FUNCTION: To deploy the Deal Contract
@@ -70,24 +82,24 @@ contract deployer_contract is Context {
 
         p2pRequests[requestDetails.borrower].dealAddress = address(dealContract);
 
-        delete p2pRequest;
+        delete p2pRequestInstance;
 
         // emit Event to notify both lender and borrower
     }
 
-    function guranteeDeploy() internal {
-        guranteeRequest storage requestDetails = guranteeRequestInstance;
+    function guarantyDeploy() internal {
+        guarantyRequest storage requestDetails = guarantyRequestInstance;
 
-        guaranteeContract = new guarantee_contract(
+        guarantyContract = new guaranty_contract(
             requestDetails.borrower,
             requestDetails.lender,
             requestDetails.totalAmount,
             requestDetails.timeRentedUntil
         );
 
-        guranteeRequests[requestDetails.borrower].dealAddress = address(guaranteeContract);
+        guarantyRequests[requestDetails.borrower].dealAddress = address(guarantyContract);
 
-        delete guranteeRequest;
+        delete guarantyRequestInstance;
     }
 
     // * FUNCTION: To raise the p2pRequest to borrow
@@ -115,21 +127,23 @@ contract deployer_contract is Context {
     }
 
     // * FUNCTION: To raise the request for backing the loan from the protocol
-    function guaranteeRaiseRequest(
-        uint256 _totalAmount,
+    function guarantyRaiseRequest(
         address _lender,
+        address _tokenAddress,
+        uint256 _totalAmount,
         uint256 _timeRentedUntil
     ) external {
-        require(!guranteeRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
+        require(!guarantyRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        guranteeRequest storage requestDetails = guranteeRequestInstance;
+        guarantyRequest storage requestDetails = guarantyRequestInstance;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
         requestDetails.totalAmount = _totalAmount;
         requestDetails.timeRentedUntil = _timeRentedUntil;
+        requestDetails.tokenAddress = _tokenAddress;
 
-        guranteeRequests[_msgSender()] = requestDetails;
+        guarantyRequests[_msgSender()] = requestDetails;
 
         // emit event to notify lender
     }
@@ -143,7 +157,7 @@ contract deployer_contract is Context {
 
         p2pRequests[_borrower].requestAccepted = true;
 
-        deploy();
+        p2pDeploy();
 
         (bool success, ) = _borrower.call{value: value}("");
         require(success, "ERR:OT"); // OT => On Transfer
@@ -151,13 +165,33 @@ contract deployer_contract is Context {
         // emit event to notify borrower
     }
 
-    // * FUNCTION: To accept the guranteeRequest made by the borrower
-    function guranteeAcceptRequest(address _borrower) external {
-        require(!guranteeRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
+    // * FUNCTION: To accept the guarantyRequest made by the borrower
+    function guarantyAcceptRequest(
+        address _borrower,
+        address _tokenAddress,
+        uint256 _totalAmount
+    ) external {
+        require(!guarantyRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
-        p2pRequests[_borrower].requestAccepted = true;
+        uint256 tokenAmountinProtocol = starkContract.getLockedBalance(
+            _tokenAddress,
+            _msgSender()
+        );
 
-        guranteeDeploy();
+        require(_totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
+
+        // starkContract.s_supplyBalances[_tokenAddress][_msgSender()] -= _totalAmount;
+        // starkContract.s_lockedBalances[_tokenAddress][_msgSender()] += _totalAmount;
+
+        // guarantyRequestChange();
+
+        guarantyRequests[_borrower].requestAccepted = true;
+
+        guarantyDeploy();
         // emit event to notify borrower
     }
+
+    // function guaranteeRequestChange() internal {
+    //     starkContract.
+    // }
 }
