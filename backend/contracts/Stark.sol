@@ -19,7 +19,7 @@ error Stark__TransactionFailed();
 error Stark__SorryWeCurrentlyDoNotHaveThisToken(address tokenAddress);
 error Stark__UpKeepNotNeeded();
 
-contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
+contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     address[] private s_allowedTokens; // * Array of allowed tokens
     address[] private s_suppliers; // * Array of all suppliers
     address[] private s_borrowers; // * Array of all borrowers
