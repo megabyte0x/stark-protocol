@@ -40,7 +40,7 @@ export default function RequestLoanModal({ isVisible, onClose }) {
                 isCentered={true}
                 hasFooter={false}
             >
-                <div className="p-6 pb-12 grid grid-cols-2 gap-1 place-content-stretch h-35">
+                <div className="p-12 p-8 pr-4 pb-12 grid grid-cols-2 gap-1 place-content-stretch h-35">
                     <div
                         style={{
                             width: "250px",
