@@ -20,6 +20,7 @@ error Stark__SorryWeCurrentlyDoNotHaveThisToken(address tokenAddress);
 error Stark__UpKeepNotNeeded();
 
 contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
+    address private deployer;
     address[] private s_allowedTokens; // * Array of allowed tokens
     address[] private s_suppliers; // * Array of all suppliers
     address[] private s_borrowers; // * Array of all borrowers
@@ -68,6 +69,9 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
     // tokenAddress & user adddress -> their borrowed balance
     mapping(address => mapping(address => uint256)) private s_borrowedBalances;
+
+    // tokenAddress & user adddress -> their locked balance
+    mapping(address => mapping(address => uint256)) private s_lockedBalances;
 
     // token address -> price feeds
     mapping(address => AggregatorV3Interface) private s_priceFeeds;
@@ -123,11 +127,17 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         _;
     }
 
+    modifier onlyDeployer() {
+        require(msg.sender == deployer, "ERR:NA"); // NA=> Not Allowed
+        _;
+    }
+
     //////////////////////////
     ///  Main  Functions   ///
     /////////////////////////
 
     constructor(
+        address _deployer,
         address[] memory allowedTokens,
         address[] memory priceFeeds,
         uint256 updateInterval
@@ -138,6 +148,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         }
         i_interval = updateInterval;
         s_lastTimeStamp = block.timestamp;
+        deployer = msg.sender;
     }
 
     // * FUNCTION: Users can supply tokens
@@ -250,10 +261,9 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
     function noCollateralBorrow(address friendAddress) external {
         // use table land to store data of all users who have guarantee
-        // then use query to read data to find if this msg.sender have guantees or if have then 
+        // then use query to read data to find if this msg.sender have guantees or if have then
         // take allower address and borrower address from table and update their balance accordingly
         hasGuaranty();
-
     }
 
     function hasGuaranty() public {
@@ -499,6 +509,14 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         return s_supplyBalances[tokenAddress][userAddress];
     }
 
+    function getLockedBalance(address tokenAddress, address userAddress)
+        external
+        view
+        returns (uint256)
+    {
+        return s_lockedBalances[tokenAddress][userAddress];
+    }
+
     function getBorrowedBalance(address tokenAddress, address userAddress)
         external
         view
@@ -596,4 +614,39 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     function getInterval() external view returns (uint256) {
         return i_interval;
     }
+
+
+     ////////////////////////////
+    ///   Interface Functions   ///
+    ////////////////////////////
+
+    // * FUNCTION: To Lock the Balance of the lender
+    function requestChange_LockBalance(
+        address _tokenAddress,
+        address _lender,
+        address _borrower,
+        uint256 _tokenAmount
+    ) external onlyDeployer {
+        s_supplyBalances[_tokenAddress][_lender] -= _tokenAmount;
+        s_lockedBalances[_tokenAddress][_lender] += _tokenAmount;
+
+        // emit Event to Lender that his funds are locked
+
+        requestChange_LendBalance(_tokenAddress, _borrower, _tokenAmount);
+    }
+
+    // * FUNCTIONL: To transfer the funds to the Borrower Balance
+    function requestChange_LendBalance(
+        address _tokenAddress,
+        address _borrower,
+        uint256 _tokenAmount
+    ) internal {
+        s_supplyBalances[_tokenAddress][_borrower] -= _tokenAmount;
+
+        // emit Event to Borrower that he received the funds
+    }
+}
+
+interface Istark_protocol {
+    function requestChange_LockBalance(address, address, address, uint256) external;
 }
