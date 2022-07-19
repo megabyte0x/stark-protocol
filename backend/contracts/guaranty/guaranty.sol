@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 
@@ -66,15 +67,15 @@ contract guaranty_contract is Context {
         uint256 value = msg.value;
         require(value <= 0, "ERR:MA"); // MA => Minimum Amount should be greater than zero
 
-        (bool success, ) = lender.call{value: amtToLender}("");
+        (bool success, ) = lender.call{value: value}("");
         require(success, "ERR:OT"); //OT => On Transfer
 
         dealDetails.amountPaidTotal += value;
         dealDetails.totalAmountToPay -= value;
 
-        if(dealDetails.amountPaidTotal == dealDetails.totalAmount){
+        if (dealDetails.amountPaidTotal == dealDetails.totalAmount) {
             // emit Event
             // Release the collateral
-        }  
+        }
     }
 }
