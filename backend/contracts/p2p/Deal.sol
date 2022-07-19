@@ -24,8 +24,8 @@ contract deal_contract is Context {
 
     struct AdditionalRequest {
         uint16 noOfInstalments; // * No of additional instalments
-        uint256 interestRate;   // * Interest Rate
-        bool isAccepted;        // * Request Accepted or Not
+        uint256 interestRate; // * Interest Rate
+        bool isAccepted; // * Request Accepted or Not
     }
 
     mapping(address => AdditionalRequest) additionRequest;
@@ -78,14 +78,10 @@ contract deal_contract is Context {
     }
 
     // * FUNCTION: To get the Instalment Amount
-    function getInstalmentAmount(uint256 _instalmentAmount)
-        public
-        view
-        returns (uint256)
-    {
+    function getInstalmentAmount(uint256 _instalmentAmount) public view returns (uint256) {
         DealDetials storage dealDetails = deal;
-        uint256 interestAmount = (_instalmentAmount *
-            dealDetails.interestRate) / (dealDetails.noOfInstalments * 100);
+        uint256 interestAmount = (_instalmentAmount * dealDetails.interestRate) /
+            (dealDetails.noOfInstalments * 100);
 
         uint256 instalmentAmount = _instalmentAmount + interestAmount;
         return instalmentAmount;
@@ -115,10 +111,7 @@ contract deal_contract is Context {
     function payAtOnce() external payable onlyBorrower {
         DealDetials storage dealDetails = deal;
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
-        require(
-            dealDetails.amountPaidTotal < dealDetails.totalAmount,
-            "ERR:NM"
-        ); // NM => No more installments
+        require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
         uint256 value = msg.value;
         uint256 amountLeftToPay = getTotalAmountLeft();
@@ -136,10 +129,7 @@ contract deal_contract is Context {
         DealDetials storage dealDetails = deal;
 
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
-        require(
-            dealDetails.amountPaidTotal < dealDetails.totalAmount,
-            "ERR:NM"
-        ); // NM => No more installments
+        require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
         uint256 value = msg.value;
 
@@ -155,10 +145,7 @@ contract deal_contract is Context {
 
             // * amtToLender: Amount after with 95% of additional interest is added
             uint256 amtToLender = amtToLenderOnly +
-                (dealDetails.instalmentAmt *
-                    dealDetails.addedInterestRate *
-                    95 *
-                    10**16);
+                (dealDetails.instalmentAmt * dealDetails.addedInterestRate * 95 * 10**16);
 
             // * amtToProtocol: Amount after with 5% of additional interest is added
             uint256 amtToProtocol = dealDetails.instalmentAmt *
@@ -169,9 +156,7 @@ contract deal_contract is Context {
             (bool successInLender, ) = lender.call{value: amtToLender}("");
             require(successInLender, "ERR:OT"); //OT => On Transfer
 
-            (bool successInBorrower, ) = deployer.call{value: amtToProtocol}(
-                ""
-            );
+            (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
             require(successInBorrower, "ERR:OT"); //OT => On Transfer
         } else {
             require(value == amtToLenderOnly, "ERR:WV"); // WV => Wrong value
@@ -186,10 +171,10 @@ contract deal_contract is Context {
     }
 
     // * FUNCTION: Request the Lender for more instalments
-    function requestNoOfInstalment(
-        uint16 noOfAddInstalments,
-        uint256 _interestRate
-    ) external onlyBorrower {
+    function requestNoOfInstalment(uint16 noOfAddInstalments, uint256 _interestRate)
+        external
+        onlyBorrower
+    {
         require(noOfAddInstalments >= 3, "ERR:MR"); // MR => Minimum required no of instalments
 
         additionRequest[_msgSender()] = AdditionalRequest(
