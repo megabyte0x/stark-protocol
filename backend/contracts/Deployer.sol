@@ -3,9 +3,11 @@ pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./p2p/Deal.sol";
+import "./guarantee/guarantee.sol";
 
 contract deployer_contract is Context {
     deal_contract private dealContract;
+    guarantee_contract private guaranteeContract;
 
     address private owner;
 
@@ -32,7 +34,9 @@ contract deployer_contract is Context {
     struct guranteeRequest {
         address borrower; // * Address of the borrower
         address lender; // * Address of the Lender
+        address dealAddress;
         uint256 totalAmount; // * Amount looking for the gurantee
+        uint256 _timeRentedUntil;
         bool requestAccepted; // * Request Raised by the lender accepted or not
     }
 
@@ -71,6 +75,21 @@ contract deployer_contract is Context {
         // emit Event to notify both lender and borrower
     }
 
+    function guranteeDeploy() internal {
+        guranteeRequest storage requestDetails = guranteeRequestInstance;
+
+        guaranteeContract = new guarantee_contract(
+            requestDetails.borrower,
+            requestDetails.lender,
+            requestDetails.totalAmount,
+            requestDetails.timeRentedUntil
+        );
+
+        guranteeRequests[requestDetails.borrower].dealAddress = address(guaranteeContract);
+
+        delete guranteeRequest;
+    }
+
     // * FUNCTION: To raise the p2pRequest to borrow
     function p2pRaiseRequest(
         uint256 _instalmentAmount,
@@ -96,7 +115,11 @@ contract deployer_contract is Context {
     }
 
     // * FUNCTION: To raise the request for backing the loan from the protocol
-    function guaranteeRaiseRequest(uint256 _totalAmount, address _lender) external {
+    function guaranteeRaiseRequest(
+        uint256 _totalAmount,
+        address _lender,
+        uint256 _timeRentedUntil
+    ) external {
         require(!guranteeRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
         guranteeRequest storage requestDetails = guranteeRequestInstance;
@@ -104,6 +127,7 @@ contract deployer_contract is Context {
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
         requestDetails.totalAmount = _totalAmount;
+        requestDetails.timeRentedUntil = _timeRentedUntil;
 
         guranteeRequests[_msgSender()] = requestDetails;
 
@@ -128,12 +152,12 @@ contract deployer_contract is Context {
     }
 
     // * FUNCTION: To accept the guranteeRequest made by the borrower
-    function guranteeAcceptRequest (address _borrower) external {
+    function guranteeAcceptRequest(address _borrower) external {
         require(!guranteeRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
         p2pRequests[_borrower].requestAccepted = true;
 
+        guranteeDeploy();
         // emit event to notify borrower
     }
-
 }
