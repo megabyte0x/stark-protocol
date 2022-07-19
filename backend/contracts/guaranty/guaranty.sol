@@ -2,12 +2,12 @@
 
 import "@openzeppelin/contracts/utils/Context.sol";
 
-contract guarantee_contract is Context {
+contract guaranty_contract is Context {
     address private deployer;
     address private borrower;
     address private lender;
 
-    struct GuranteeDetails {
+    struct GuarantyDetails {
         uint256 totalAmount; // * Total amount borrowed by the borrower
         uint256 totalAmountToPay; // * Total amount left to be paid
         uint256 amountPaidTotal; // * Amount paid by the borrower in total
@@ -15,7 +15,7 @@ contract guarantee_contract is Context {
         uint256 timeRentedUntil; // * Time when the deal will end
     }
 
-    GuranteeDetails private deal;
+    GuarantyDetails private deal;
 
     constructor(
         address _borrower,
@@ -27,7 +27,7 @@ contract guarantee_contract is Context {
         borrower = _borrower;
         lender = _lender;
 
-        GuranteeDetails storage dealDetails = deal;
+        GuarantyDetails storage dealDetails = deal;
 
         dealDetails.timeRentedSince = block.timestamp;
         dealDetails.timeRentedUntil = block.timestamp + _timeRentedUntil;
@@ -50,7 +50,7 @@ contract guarantee_contract is Context {
     }
 
     // * FUNCTION: To get the detials of the Deal.
-    function getDealDetails() public view returns (GuranteeDetails memory) {
+    function getDealDetails() public view returns (GuarantyDetails memory) {
         return deal;
     }
 
@@ -60,7 +60,7 @@ contract guarantee_contract is Context {
     }
 
     function repay() external payable onlyBorrower {
-        GuranteeDetails storage dealDetails = deal;
+        GuarantyDetails storage dealDetails = deal;
         require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
         uint256 value = msg.value;
