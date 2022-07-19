@@ -7,7 +7,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.15;
 
 error Stark__NeedMoreThanZero(uint256 amount);
 error Stark__NotSupplied();
@@ -51,7 +51,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address indexed userAddress,
         uint256 indexed amount
     );
-    event Guaranteed(
+    event Guarantyd(
         address indexed userAddress,
         address indexed friendAddress,
         bool indexed reponse
@@ -83,7 +83,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     mapping(address => address[]) private s_borrowerUniqueTokens;
 
     // userAddress & friend address => their guaranties
-    mapping(address => mapping(address => bool)) private s_guarantees;
+    mapping(address => mapping(address => bool)) private s_guarantys;
 
     /////////////////////
     ///   Modifiers   ///
@@ -137,7 +137,6 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     /////////////////////////
 
     constructor(
-        address _deployer,
         address[] memory allowedTokens,
         address[] memory priceFeeds,
         uint256 updateInterval
@@ -245,30 +244,30 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         }
     }
 
-    // * FUNCTION: To allow guarantee requests to be sent
-    function allowGuarantee(address friendAddress) external {
-        s_guarantees[msg.sender][friendAddress] = true;
-        emit Guaranteed(msg.sender, friendAddress, true);
+    // * FUNCTION: To allow guaranty requests to be sent
+    function allowGuaranty(address friendAddress) external {
+        s_guarantys[msg.sender][friendAddress] = true;
+        emit Guarantyd(msg.sender, friendAddress, true);
     }
 
-    // * FUNCTION: To disallow guarantee requests to be sent
-    function disAllowGuarantee(address friendAddress) external {
-        s_guarantees[msg.sender][friendAddress] = false;
-        emit Guaranteed(msg.sender, friendAddress, false);
+    // * FUNCTION: To disallow guaranty requests to be sent
+    function disAllowGuaranty(address friendAddress) external {
+        s_guarantys[msg.sender][friendAddress] = false;
+        emit Guarantyd(msg.sender, friendAddress, false);
     }
 
-    // PS: change the name guarantee to something else if you don't like
+    // PS: change the name guaranty to something else if you don't like
 
-    function noCollateralBorrow(address friendAddress) external {
-        // use table land to store data of all users who have guarantee
-        // then use query to read data to find if this msg.sender have guantees or if have then
-        // take allower address and borrower address from table and update their balance accordingly
-        hasGuaranty();
-    }
+    // function noCollateralBorrow(address friendAddress) external {
+    //     // use table land to store data of all users who have guaranty
+    //     // then use query to read data to find if this msg.sender have guantees or if have then
+    //     // take allower address and borrower address from table and update their balance accordingly
+    //     hasGuaranty();
+    // }
 
-    function hasGuaranty() public {
-        // read from database and check if allowed
-    }
+    // function hasGuaranty() public {
+    //     // read from database and check if allowed
+    // }
 
     // * FUNCTION: TO charge APY on borrowings
     function chargeAPY() private {
@@ -615,8 +614,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         return i_interval;
     }
 
-
-     ////////////////////////////
+    ////////////////////////////
     ///   Interface Functions   ///
     ////////////////////////////
 
@@ -641,12 +639,8 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address _borrower,
         uint256 _tokenAmount
     ) internal {
-        s_supplyBalances[_tokenAddress][_borrower] -= _tokenAmount;
+        s_supplyBalances[_tokenAddress][_borrower] += _tokenAmount;
 
         // emit Event to Borrower that he received the funds
     }
-}
-
-interface Istark_protocol {
-    function requestChange_LockBalance(address, address, address, uint256) external;
 }
