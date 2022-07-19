@@ -2,9 +2,9 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "deal.sol";
-import "guaranty.sol";
-import "IStark.sol";
+import "./p2p/deal.sol";
+import "./guaranty/guaranty.sol";
+import "./interfaces/IStark.sol";
 
 contract deployer_contract is Context {
     deal_contract private dealContract;
@@ -180,18 +180,16 @@ contract deployer_contract is Context {
 
         require(_totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
 
-        // starkContract.s_supplyBalances[_tokenAddress][_msgSender()] -= _totalAmount;
-        // starkContract.s_lockedBalances[_tokenAddress][_msgSender()] += _totalAmount;
-
-        // guarantyRequestChange();
+        starkContract.requestChange_LockBalance(
+            _tokenAddress,
+            _msgSender(),
+            _borrower,
+            _tokenAmount
+        );
 
         guarantyRequests[_borrower].requestAccepted = true;
 
         guarantyDeploy();
         // emit event to notify borrower
     }
-
-    // function guaranteeRequestChange() internal {
-    //     starkContract.
-    // }
 }
