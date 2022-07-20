@@ -4,12 +4,16 @@ import starkAbi from "../constants/Stark.json";
 import contractAddresses from "../constants/networkMapping.json";
 import { useMoralis } from "react-moralis";
 import { ethers } from "ethers";
+import GuarantyModal from "./GuarantyModal";
+import P2PModal from "./P2PModal";
 
 export default function RequestLoanModal({ isVisible, onClose }) {
     const [borrowAmount, setBorrowAmount] = useState("0");
     const { isWeb3Enabled, account, chainId } = useMoralis();
     const [isOkDisabled, setIsOkDisabled] = useState(false);
     const [availableTokens, setAvailableTokens] = useState("0");
+    const [showGuarantyModal, setShowGuarantyModal] = useState(false);
+    const [showP2PModal, setShowP2PModal] = useState(false);
     const dispatch = useNotification();
 
     async function updateUI() {
@@ -48,8 +52,7 @@ export default function RequestLoanModal({ isVisible, onClose }) {
                     >
                         <Card
                             description="Borrow from a lender directly"
-                            onClick={function noRefCheck() {}}
-                            setIsSelected={function noRefCheck() {}}
+                            onClick={() => setShowP2PModal(true)}
                             title="P2P"
                             tooltipText="Borrow from a lender directly"
                         >
@@ -65,11 +68,10 @@ export default function RequestLoanModal({ isVisible, onClose }) {
                         }}
                     >
                         <Card
-                            description="Borrow with Guaranty"
-                            onClick={function noRefCheck() {}}
-                            setIsSelected={function noRefCheck() {}}
-                            title="Guaranty"
-                            tooltipText="Take Guranty from your freind so you can borrow"
+                            description="Take Guaranty from your friend so you can borrow"
+                            onClick={() => setShowGuarantyModal(true)}
+                            title="Borrow with Guaranty"
+                            tooltipText="Take Guranty from your friend so you can borrow"
                         >
                             <div>
                                 <Illustration height="180px" logo="confirmed" width="100%" />
@@ -78,6 +80,11 @@ export default function RequestLoanModal({ isVisible, onClose }) {
                     </div>
                 </div>
             </Modal>
+            <GuarantyModal
+                isVisible={showGuarantyModal}
+                onClose={() => setShowGuarantyModal(false)}
+            />
+            <P2PModal isVisible={showP2PModal} onClose={() => setShowP2PModal(false)} />
         </div>
     );
 }
