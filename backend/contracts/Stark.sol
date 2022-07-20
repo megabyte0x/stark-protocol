@@ -85,6 +85,9 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     // userAddress & friend address => their guaranties
     mapping(address => mapping(address => bool)) private s_guarantys;
 
+    // contractAddress -> permission to modify the data in this contract
+    mapping(address => bool) private s_allowedContracts;
+
     /////////////////////
     ///   Modifiers   ///
     /////////////////////
@@ -127,8 +130,15 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         _;
     }
 
+    // * MODIFIER: Check whether the intracting contract is the deployer.
     modifier onlyDeployer() {
         require(msg.sender == deployer, "ERR:NA"); // NA=> Not Allowed
+        _;
+    }
+
+    // * MODIFIER: Check whether the contract address is allowed to modify values.
+    modifier onlyAllowedContracts(address _contractAddress) {
+        require(s_allowedContracts[_contractAddress], "ERR:NA"); // NA=>  Not Allowed
         _;
     }
 
@@ -633,7 +643,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         requestChange_LendBalance(_tokenAddress, _borrower, _tokenAmount);
     }
 
-    // * FUNCTIONL: To transfer the funds to the Borrower Balance
+    // * FUNCTION: To transfer the funds to the Borrower Balance
     function requestChange_LendBalance(
         address _tokenAddress,
         address _borrower,
@@ -642,5 +652,27 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         s_supplyBalances[_tokenAddress][_borrower] += _tokenAmount;
 
         // emit Event to Borrower that he received the funds
+    }
+
+    // * FUNCTION: Deployer will add the guaranty contract in the List.
+    function addAllowContracts(address _contractAddress) external onlyDeployer {
+        s_allowedContracts[_contractAddress] = true;
+
+        // emit Event (optional)
+    }
+
+    // * FUNCTION: Guaranty Contracts will change the balances after repayment.
+    function changeBalances(
+        address _tokenAddress,
+        address _lender,
+        address _borrower,
+        uint256 _tokenAmount
+    ) external onlyAllowedContracts {
+        s_supplyBalances[_tokenAddress][_borrower] -= _tokenAmount;
+
+        s_supplyBalances[_tokenAddress][_lender] += _tokenAmount;
+        s_lockedBalances[_tokenAddress][_lender] -= _tokenAmount;
+
+        // Emit Event notifyinf user that Balance is received in the protocol.
     }
 }

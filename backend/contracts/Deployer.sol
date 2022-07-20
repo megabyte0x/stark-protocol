@@ -99,6 +99,8 @@ contract deployer_contract is Context {
 
         guarantyRequests[requestDetails.borrower].dealAddress = address(guarantyContract);
 
+        starkContract.addAllowContracts(address(guarantyContract));
+
         delete guarantyRequestInstance;
     }
 

@@ -14,4 +14,12 @@ interface Istark_protocol {
         address _borrower,
         uint256 _tokenAmount
     ) external;
+
+    function addAllowContracts(address _contractAddress) external;
+
+    function changeBalances(
+        address _tokenAddress,
+        address _lender,
+        uint256 _tokenAmount
+    ) external;
 }
