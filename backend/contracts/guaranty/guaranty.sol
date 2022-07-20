@@ -2,11 +2,16 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
+import "../interfaces/IStark.sol";
 
 contract guaranty_contract is Context {
     address private deployer;
     address private borrower;
     address private lender;
+    address private tokenAddress;
+    // address private starkAddress;
+
+    Istark_protocol starkContract;
 
     struct GuarantyDetails {
         uint256 totalAmount; // * Total amount borrowed by the borrower
@@ -21,12 +26,16 @@ contract guaranty_contract is Context {
     constructor(
         address _borrower,
         address _lender,
+        address _starkAddress,
+        address _tokenAddress,
         uint256 _totalAmount,
         uint256 _timeRentedUntil
     ) {
         deployer = _msgSender();
         borrower = _borrower;
         lender = _lender;
+        starkContract = Istark_protocol(_starkAddress);
+        tokenAddress = _tokenAddress;
 
         GuarantyDetails storage dealDetails = deal;
 
@@ -73,9 +82,10 @@ contract guaranty_contract is Context {
         dealDetails.amountPaidTotal += value;
         dealDetails.totalAmountToPay -= value;
 
+        starkContract.changeBalances(tokenAddress, lender, borrower, value);
+
         if (dealDetails.amountPaidTotal == dealDetails.totalAmount) {
             // emit Event
-            // Release the collateral
         }
     }
 }

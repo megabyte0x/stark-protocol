@@ -20,6 +20,7 @@ interface Istark_protocol {
     function changeBalances(
         address _tokenAddress,
         address _lender,
+        address _borrower,
         uint256 _tokenAmount
     ) external;
 }

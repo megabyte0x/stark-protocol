@@ -12,14 +12,16 @@ contract deployer_contract is Context {
     Istark_protocol starkContract;
 
     address private owner;
+    address private starkProtocolAddress;
 
     constructor() {
         owner = _msgSender();
     }
 
-    function setStarkAddress(address starkProtocolAddress) external {
+    function setStarkAddress(address _starkProtocolAddress) external {
         require(_msgSender() == owner, "ERR:NA"); // NA=> Not Allowed
-        starkContract = Istark_protocol(starkProtocolAddress);
+        starkContract = Istark_protocol(_starkProtocolAddress);
+        starkProtocolAddress = _starkProtocolAddress;
     }
 
     struct p2pRequest {
@@ -93,6 +95,8 @@ contract deployer_contract is Context {
         guarantyContract = new guaranty_contract(
             requestDetails.borrower,
             requestDetails.lender,
+            starkProtocolAddress,
+            requestDetails.tokenAddress,
             requestDetails.totalAmount,
             requestDetails.timeRentedUntil
         );
