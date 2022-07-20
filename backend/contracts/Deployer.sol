@@ -169,7 +169,7 @@ contract deployer_contract is Context {
     function guarantyAcceptRequest(
         address _borrower,
         address _tokenAddress,
-        uint256 _totalAmount
+        uint256 _tokenAmount
     ) external {
         require(!guarantyRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
@@ -178,7 +178,7 @@ contract deployer_contract is Context {
             _msgSender()
         );
 
-        require(_totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
+        require(_tokenAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
 
         starkContract.requestChange_LockBalance(
             _tokenAddress,
