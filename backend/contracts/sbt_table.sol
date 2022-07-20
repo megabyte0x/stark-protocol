@@ -23,6 +23,13 @@ contract sbt_table is Context, ERC721URIStorage, Ownable  {
     // Our will be pulled from the network
     string private _baseURIString = "https://testnet.tableland.network/query?s=";
 
+    string private constant RED_SVG='<svg id="eChK4yXtexE1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" width="300" height="300" style="background-color:#FF0000"><text dx="0" dy="0" font-family="&quot;Roboto&quot;" font-size="15" font-weight="400" transform="matrix(4.917124 0 0 5.062497 87.876901 175.927052)" stroke-width="0"><tspan y="0" font-weight="400" stroke-width="0"><![CDATA[100]]></tspan></text></svg>';
+
+    string private constant YELLOW_SVG='<svg id="eChK4yXtexE1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" width="300" height="300" style="background-color:#fdff00"><text dx="0" dy="0" font-family="&quot;Roboto&quot;" font-size="15" font-weight="400" transform="matrix(4.917124 0 0 5.062497 87.876901 175.927052)" stroke-width="0"><tspan y="0" font-weight="400" stroke-width="0"><![CDATA[100]]></tspan></text></svg>';
+
+    string private constant GREEN_SVG='<svg id="eChK4yXtexE1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" width="300" height="300" style="background-color:#00FF00"><text dx="0" dy="0" font-family="&quot;Roboto&quot;" font-size="15" font-weight="400" transform="matrix(4.917124 0 0 5.062497 87.876901 175.927052)" stroke-width="0"><tspan y="0" font-weight="400" stroke-width="0"><![CDATA[100]]></tspan></text></svg>>';
+
+
     // Called only when the smart contract is created
     // registry = 0x4b48841d4b32C4650E4ABc117A03FE8B51f38F68
     constructor(address registry) ERC721("Pixel", "ITM") {

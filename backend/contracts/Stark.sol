@@ -51,7 +51,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address indexed userAddress,
         uint256 indexed amount
     );
-    event Guarantyd(
+    event Guaranteed(
         address indexed userAddress,
         address indexed friendAddress,
         bool indexed reponse
@@ -257,13 +257,13 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     // * FUNCTION: To allow guaranty requests to be sent
     function allowGuaranty(address friendAddress) external {
         s_guarantys[msg.sender][friendAddress] = true;
-        emit Guarantyd(msg.sender, friendAddress, true);
+        emit Guaranteed(msg.sender, friendAddress, true);
     }
 
     // * FUNCTION: To disallow guaranty requests to be sent
     function disAllowGuaranty(address friendAddress) external {
         s_guarantys[msg.sender][friendAddress] = false;
-        emit Guarantyd(msg.sender, friendAddress, false);
+        emit Guaranteed(msg.sender, friendAddress, false);
     }
 
     // PS: change the name guaranty to something else if you don't like
