@@ -3,6 +3,12 @@
 pragma solidity 0.8.15;
 
 interface Istark_protocol {
+
+    function getSupplyBalance(address tokenAddress, address userAddress)
+        external
+        view
+        returns (uint256);
+
     function getLockedBalance(address tokenAddress, address userAddress)
         external
         view

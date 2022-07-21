@@ -651,6 +651,8 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     ) internal {
         s_supplyBalances[_tokenAddress][_borrower] += _tokenAmount;
 
+        s_totalSupply[_tokenAddress] -= _tokenAmount; 
+
         // emit Event to Borrower that he received the funds
     }
 
@@ -667,7 +669,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address _lender,
         address _borrower,
         uint256 _tokenAmount
-    ) external onlyAllowedContracts {
+    ) external onlyAllowedContracts(msg.sender) {
         s_supplyBalances[_tokenAddress][_borrower] -= _tokenAmount;
 
         s_supplyBalances[_tokenAddress][_lender] += _tokenAmount;

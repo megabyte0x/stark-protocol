@@ -2,13 +2,17 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
+import "../interfaces/IStark.sol";
 
 contract deal_contract is Context {
     address private deployer;
     address private borrower;
     address private lender;
 
+    Istark_protocol starkContract;
+
     struct DealDetials {
+        address tokenAddress;
         uint256 totalAmount; // * Total amount borrowed by the borrower
         uint256 totalAmountToPay; // * Total amount including interest left to be paid
         uint256 amountPaidTotal; // * Amount paid by the borrower in total
@@ -33,6 +37,8 @@ contract deal_contract is Context {
     constructor(
         address _borrower,
         address _lender,
+        address _starkAddress,
+        address _tokenAddress,
         uint256 _instalmentAmount,
         uint256 _totalAmount,
         uint256 _interestRate,
@@ -41,8 +47,9 @@ contract deal_contract is Context {
         deployer = _msgSender();
         borrower = _borrower;
         lender = _lender;
+        starkContract = Istark_protocol(_starkAddress);
 
-        DealDetials storage dealDetails = deal;
+        DealDetials memory dealDetails = deal;
 
         dealDetails.noOfInstalments = _noOfInstalments;
         dealDetails.totalAmount = _totalAmount;
@@ -50,6 +57,7 @@ contract deal_contract is Context {
         dealDetails.timeRentedSince = uint256(block.timestamp);
         dealDetails.instalmentAmt = getInstalmentAmount(_instalmentAmount);
         dealDetails.totalAmountToPay = _totalAmount + dealDetails.instalmentAmt;
+        dealDetails.tokenAddress = _tokenAddress;
     }
 
     modifier onlyBorrower() {
@@ -79,7 +87,7 @@ contract deal_contract is Context {
 
     // * FUNCTION: To get the Instalment Amount
     function getInstalmentAmount(uint256 _instalmentAmount) public view returns (uint256) {
-        DealDetials storage dealDetails = deal;
+        DealDetials memory dealDetails = deal;
         uint256 interestAmount = (_instalmentAmount * dealDetails.interestRate) /
             (dealDetails.noOfInstalments * 100);
 
@@ -108,30 +116,29 @@ contract deal_contract is Context {
     }
 
     // * FUNCTION: Pay the amount left at once
-    function payAtOnce() external payable onlyBorrower {
-        DealDetials storage dealDetails = deal;
+    function payAtOnce() external onlyBorrower {
+        DealDetials memory dealDetails = deal;
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
         require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
-        uint256 value = msg.value;
+        // uint256 value = msg.value;
         uint256 amountLeftToPay = getTotalAmountLeft();
-        require(value == amountLeftToPay, "ERR:WV"); // WV => Wrong value
+        // require(value == amountLeftToPay, "ERR:WV"); // WV => Wrong value
 
-        (bool success, ) = lender.call{value: value}("");
-        require(success, "ERR:OT"); //OT => On Trnasfer
+        starkContract.changeBalances(dealDetails.tokenAddress, lender, borrower, amountLeftToPay);
 
-        dealDetails.amountPaidTotal += value;
-        dealDetails.totalAmountToPay -= value;
+        deal.amountPaidTotal += value;
+        deal.totalAmountToPay -= value;
     }
 
     // * FUNCTION: Pay the pre-defined amount in instalments not necessarily periodically.
     function payInInstalment() external payable onlyBorrower {
-        DealDetials storage dealDetails = deal;
+        DealDetials memory dealDetails = deal;
 
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
         require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
-        uint256 value = msg.value;
+        // uint256 value = msg.value;
 
         // * amtToLenderOnly: Amount with standard interest
         uint256 amtToLenderOnly = dealDetails.instalmentAmt;
@@ -141,7 +148,7 @@ contract deal_contract is Context {
             uint256 totalInterestedAmount = amtToLenderOnly +
                 (dealDetails.addedInterestRate * dealDetails.instalmentAmt);
 
-            require(value == totalInterestedAmount, "ERR:WV"); // WV => Wrong value
+            // require(value == totalInterestedAmount, "ERR:WV"); // WV => Wrong value
 
             // * amtToLender: Amount after with 95% of additional interest is added
             uint256 amtToLender = amtToLenderOnly +
@@ -153,21 +160,29 @@ contract deal_contract is Context {
                 5 *
                 10**16;
 
-            (bool successInLender, ) = lender.call{value: amtToLender}("");
-            require(successInLender, "ERR:OT"); //OT => On Transfer
+            // (bool successInLender, ) = lender.call{value: amtToLender}("");
+            // require(successInLender, "ERR:OT"); //OT => On Transfer
 
-            (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
-            require(successInBorrower, "ERR:OT"); //OT => On Transfer
+            starkContract.changeBalances(dealDetails.tokenAddress, lender, borrower, amtToLender);
+
+            // (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
+            // require(successInBorrower, "ERR:OT"); //OT => On Transfer
+
+            //! TODO: Function to pass the value to the protocol
+            
         } else {
-            require(value == amtToLenderOnly, "ERR:WV"); // WV => Wrong value
 
-            (bool success, ) = lender.call{value: amtToLenderOnly}("");
-            require(success, "ERR:OT"); //OT => On Transfer
+            starkContract.changeBalances(
+                dealDetails.tokenAddress,
+                lender,
+                borrower,
+                amtToLenderOnly
+            );
         }
 
-        dealDetails.amountPaidTotal += value;
-        dealDetails.totalAmountToPay -= value;
-        --dealDetails.noOfInstalments;
+        deal.amountPaidTotal += value;
+        deal.totalAmountToPay -= value;
+        --deal.noOfInstalments;
     }
 
     // * FUNCTION: Request the Lender for more instalments
@@ -196,10 +211,8 @@ contract deal_contract is Context {
 
         additionRequest[_borrower].isAccepted = true;
 
-        DealDetials storage dealDetails = deal;
-
-        dealDetails.noOfInstalments += _noOfAddInstalments;
-        dealDetails.addedInterestRate = _interestRate;
-        dealDetails.addedInstalments = true;
+        deal.noOfInstalments += _noOfAddInstalments;
+        deal.addedInterestRate = _interestRate;
+        deal.addedInstalments = true;
     }
 }
