@@ -37,7 +37,7 @@ contract guaranty_contract is Context {
         starkContract = Istark_protocol(_starkAddress);
         tokenAddress = _tokenAddress;
 
-        GuarantyDetails storage dealDetails = deal;
+        GuarantyDetails memory dealDetails = deal;
 
         dealDetails.timeRentedSince = block.timestamp;
         dealDetails.timeRentedUntil = block.timestamp + _timeRentedUntil;
@@ -69,18 +69,18 @@ contract guaranty_contract is Context {
         return deal.totalAmountToPay;
     }
 
-    function repay() external payable onlyBorrower {
-        GuarantyDetails storage dealDetails = deal;
+    function repay() external onlyBorrower {
+        GuarantyDetails memory dealDetails = deal;
         require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
         uint256 value = msg.value;
         require(value <= 0, "ERR:MA"); // MA => Minimum Amount should be greater than zero
 
-        (bool success, ) = lender.call{value: value}("");
-        require(success, "ERR:OT"); //OT => On Transfer
+        // (bool success, ) = lender.call{value: value}("");
+        // require(success, "ERR:OT"); //OT => On Transfer
 
-        dealDetails.amountPaidTotal += value;
-        dealDetails.totalAmountToPay -= value;
+        deal.amountPaidTotal += value;
+        deal.totalAmountToPay -= value;
 
         starkContract.changeBalances(tokenAddress, lender, borrower, value);
 

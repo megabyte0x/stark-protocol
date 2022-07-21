@@ -28,6 +28,7 @@ contract deployer_contract is Context {
         address borrower; // * Address of the borrower
         address lender; // * Address of the Lender
         address dealAddress; // * Address of the Deal Contract
+        address tokenAddress;
         uint256 instalmentAmount; //* Amount to be paid in each instalment
         uint256 totalAmount; // * Total Amount borrowed
         uint256 interestRate; // * Interest Rate by the Lender
@@ -71,11 +72,13 @@ contract deployer_contract is Context {
 
     // * FUNCTION: To deploy the Deal Contract
     function p2pDeploy() internal {
-        p2pRequest storage requestDetails = p2pRequestInstance;
+        p2pRequest memory requestDetails = p2pRequestInstance;
 
         dealContract = new deal_contract(
             requestDetails.borrower,
             requestDetails.lender,
+            starkProtocolAddress,
+            requestDetails.tokenAddress,
             requestDetails.instalmentAmount,
             requestDetails.totalAmount,
             requestDetails.interestRate,
@@ -84,13 +87,15 @@ contract deployer_contract is Context {
 
         p2pRequests[requestDetails.borrower].dealAddress = address(dealContract);
 
+        starkContract.addAllowContracts(address(dealContract));
+
         delete p2pRequestInstance;
 
         // emit Event to notify both lender and borrower
     }
 
     function guarantyDeploy() internal {
-        guarantyRequest storage requestDetails = guarantyRequestInstance;
+        guarantyRequest memory requestDetails = guarantyRequestInstance;
 
         guarantyContract = new guaranty_contract(
             requestDetails.borrower,
@@ -106,6 +111,8 @@ contract deployer_contract is Context {
         starkContract.addAllowContracts(address(guarantyContract));
 
         delete guarantyRequestInstance;
+
+        // emit Event to notify both lender and borrower
     }
 
     // * FUNCTION: To raise the p2pRequest to borrow
@@ -114,11 +121,12 @@ contract deployer_contract is Context {
         uint256 _totalAmount,
         uint256 _interestRate,
         uint16 _noOfInstalments,
-        address _lender
+        address _lender,
+        address _tokenAddress
     ) external {
         require(!p2pRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        p2pRequest storage requestDetails = p2pRequestInstance;
+        p2pRequest memory requestDetails = p2pRequestInstance;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -126,6 +134,7 @@ contract deployer_contract is Context {
         requestDetails.totalAmount = _totalAmount;
         requestDetails.interestRate = _interestRate;
         requestDetails.noOfInstalments = _noOfInstalments;
+        requestDetails.tokenAddress = _tokenAddress;
 
         p2pRequests[_msgSender()] = requestDetails;
 
@@ -141,7 +150,7 @@ contract deployer_contract is Context {
     ) external {
         require(!guarantyRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        guarantyRequest storage requestDetails = guarantyRequestInstance;
+        guarantyRequest memory requestDetails = guarantyRequestInstance;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -156,41 +165,47 @@ contract deployer_contract is Context {
 
     // * FUNCTION: To accept the p2pRequest made by the borrower
     function p2pAcceptRequest(address _borrower) external payable {
-        require(!p2pRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
+        p2pRequest memory requestDetails = p2pRequests[_borrower];
 
-        uint256 value = msg.value;
-        require(p2pRequests[_borrower].totalAmount == value, "ERR:WV"); // WV => Wrong Value
+        require(!requestDetails.requestAccepted, "ERR:AA"); // AA =>Already Accepted
+        uint256 tokenAmountinProtocol = starkContract.getSupplyBalance(
+            requestDetails.tokenAddress,
+            _msgSender()
+        );
+        require(requestDetails.totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
+
+        starkContract.requestChange_LockBalance(
+            requestDetails.tokenAddress,
+            _msgSender(),
+            _borrower,
+            requestDetails.totalAmount
+        );
 
         p2pRequests[_borrower].requestAccepted = true;
 
         p2pDeploy();
 
-        (bool success, ) = _borrower.call{value: value}("");
-        require(success, "ERR:OT"); // OT => On Transfer
-
         // emit event to notify borrower
     }
 
     // * FUNCTION: To accept the guarantyRequest made by the borrower
-    function guarantyAcceptRequest(
-        address _borrower,
-        address _tokenAddress,
-        uint256 _tokenAmount
-    ) external {
-        require(!guarantyRequests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
+    function guarantyAcceptRequest(address _borrower) external {
+        guarantyRequest memory requestDetails = guarantyRequests[_borrower];
 
-        uint256 tokenAmountinProtocol = starkContract.getLockedBalance(
-            _tokenAddress,
+        require(!requestDetails.requestAccepted, "ERR:AA"); // AA =>Already Accepted
+
+        uint256 tokenAmountinProtocol = starkContract.getSupplyBalance(
+            requestDetails.tokenAddress,
             _msgSender()
         );
 
-        require(_tokenAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
+        require(requestDetails.totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
 
         starkContract.requestChange_LockBalance(
-            _tokenAddress,
+            requestDetails.tokenAddress,
             _msgSender(),
             _borrower,
-            _tokenAmount
+            requestDetails.totalAmount
         );
 
         guarantyRequests[_borrower].requestAccepted = true;
