@@ -3,7 +3,6 @@
 pragma solidity 0.8.15;
 
 interface Istark_protocol {
-
     function getSupplyBalance(address tokenAddress, address userAddress)
         external
         view
@@ -14,7 +13,7 @@ interface Istark_protocol {
         view
         returns (uint256);
 
-    function requestChange_LockBalance(
+    function lockBalanceChanges(
         address _tokenAddress,
         address _lender,
         address _borrower,
@@ -23,7 +22,7 @@ interface Istark_protocol {
 
     function addAllowContracts(address _contractAddress) external;
 
-    function changeBalances(
+    function repayChanges(
         address _tokenAddress,
         address _lender,
         address _borrower,
