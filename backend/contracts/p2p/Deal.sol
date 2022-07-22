@@ -2,7 +2,7 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "../interfaces/IStark.sol";
+import "IStark.sol";
 
 contract deal_contract is Context {
     address private deployer;
@@ -127,8 +127,8 @@ contract deal_contract is Context {
 
         starkContract.changeBalances(dealDetails.tokenAddress, lender, borrower, amountLeftToPay);
 
-        deal.amountPaidTotal += value;
-        deal.totalAmountToPay -= value;
+        deal.amountPaidTotal += amountLeftToPay;
+        deal.totalAmountToPay -= amountLeftToPay;
     }
 
     // * FUNCTION: Pay the pre-defined amount in instalments not necessarily periodically.
