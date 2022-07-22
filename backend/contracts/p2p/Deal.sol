@@ -2,7 +2,7 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "IStark.sol";
+import "../interfaces/IStark.sol";
 
 contract deal_contract is Context {
     address private deployer;
