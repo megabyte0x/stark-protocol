@@ -36,8 +36,6 @@ contract deployer_contract is Context {
         bool requestAccepted; // * Request Raised by the lender accepted or not
     }
 
-    p2pRequest private p2pRequestInstance;
-
     // * To store all the p2pRequests made in the protocol
     mapping(address => p2pRequest) private p2pRequests;
 
@@ -50,8 +48,6 @@ contract deployer_contract is Context {
         uint256 timeRentedUntil;
         bool requestAccepted; // * Request Raised by the lender accepted or not
     }
-
-    guarantyRequest private guarantyRequestInstance;
 
     // * To store all the guarantyRequest made in the protocol
     mapping(address => guarantyRequest) private guarantyRequests;
@@ -71,8 +67,8 @@ contract deployer_contract is Context {
     }
 
     // * FUNCTION: To deploy the Deal Contract
-    function p2pDeploy() internal {
-        p2pRequest memory requestDetails = p2pRequestInstance;
+    function p2pDeploy(address _borrower) internal {
+        p2pRequest memory requestDetails = p2pRequests[_borrower];
 
         dealContract = new deal_contract(
             requestDetails.borrower,
@@ -89,13 +85,11 @@ contract deployer_contract is Context {
 
         starkContract.addAllowContracts(address(dealContract));
 
-        delete p2pRequestInstance;
-
         // emit Event to notify both lender and borrower
     }
 
-    function guarantyDeploy() internal {
-        guarantyRequest memory requestDetails = guarantyRequestInstance;
+    function guarantyDeploy(address _borrower) internal {
+        guarantyRequest memory requestDetails = guarantyRequests[_borrower];
 
         guarantyContract = new guaranty_contract(
             requestDetails.borrower,
@@ -109,8 +103,6 @@ contract deployer_contract is Context {
         guarantyRequests[requestDetails.borrower].dealAddress = address(guarantyContract);
 
         starkContract.addAllowContracts(address(guarantyContract));
-
-        delete guarantyRequestInstance;
 
         // emit Event to notify both lender and borrower
     }
@@ -126,7 +118,7 @@ contract deployer_contract is Context {
     ) external {
         require(!p2pRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        p2pRequest memory requestDetails = p2pRequestInstance;
+        p2pRequest memory requestDetails;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -150,7 +142,7 @@ contract deployer_contract is Context {
     ) external {
         require(!guarantyRequests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
 
-        guarantyRequest memory requestDetails = guarantyRequestInstance;
+        guarantyRequest memory requestDetails;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -183,7 +175,7 @@ contract deployer_contract is Context {
 
         p2pRequests[_borrower].requestAccepted = true;
 
-        p2pDeploy();
+        p2pDeploy(_borrower);
 
         // emit event to notify borrower
     }
@@ -210,7 +202,7 @@ contract deployer_contract is Context {
 
         guarantyRequests[_borrower].requestAccepted = true;
 
-        guarantyDeploy();
+        guarantyDeploy(_borrower);
         // emit event to notify borrower
     }
 }
