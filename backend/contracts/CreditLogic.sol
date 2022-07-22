@@ -161,7 +161,7 @@ contract CreditLogic is Context, Ownable {
         uint256 _timeRentedUntil
     ) external {
         require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
-        GuarantyRequest storage requestDetails;
+        GuarantyRequest memory requestDetails;
 
         // if(guarantyRequests[_lender][_msgSender()]){
             
