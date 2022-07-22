@@ -1,7 +1,6 @@
 const { network, ethers } = require("hardhat");
 const { developmentChains, networkConfig } = require("../helper-hardhat-config");
 const { assert, expect } = require("chai");
-const { getContractFactory } = require("@nomiclabs/hardhat-ethers/types");
 
 !developmentChains.includes(network.name)
     ? describe.skip
@@ -34,6 +33,7 @@ const { getContractFactory } = require("@nomiclabs/hardhat-ethers/types");
               );
               // prettier-ignore
               await stark.deployed({ "from": user });
+              
           });
           describe("stark uint tests", function () {
               describe("constructor", function () {
@@ -269,19 +269,68 @@ const { getContractFactory } = require("@nomiclabs/hardhat-ethers/types");
               });
           });
           describe("deployer unit test", function () {
-              let creditLogic;
+              const gAmount = ethers.utils.parseEther("0.1");
+              let creditLogic, borrower, lender;
+
               beforeEach(async function () {
                   const creditLogicFactory = await ethers.getContractFactory("CreditLogic");
                   creditLogic = await creditLogicFactory.deploy();
+                  borrower = user2;
+                  lender = user;
                   // prettier-ignore
                   await creditLogic.deployed({"from":user});
-                  console.log("yes");
+                  await creditLogic.setStarkAddress(stark.address);
+                  await stark.addAllowContracts(creditLogic.address);
+                  // prettier-ignore
+                  await wethToken.approve(stark.address, amount, {"from": user.address});
+                  await stark.supply(wethTokenAddress, amount);
+                  console.log("ue yo chal rha hai");
               });
               describe("guaranty raise request", function () {
                   it("can ask for mutiple", async function () {
-                    await creditLogic.guarantyRaiseRequest(user.address, wethTokenAddress, amount, 10)
-                    // await creditLogic.guarantyRaiseRequest(user.address, wethTokenAddress, amount, 10)
-                    console.log(await creditLogic.getGuarantyRequests(user.address, user2.address));
+                      creditLogic = creditLogic.connect(borrower);
+
+                      await creditLogic.guarantyRaiseRequest(
+                          lender.address,
+                          wethTokenAddress,
+                          gAmount,
+                          10
+                      );
+                      console.log(
+                          parseInt(
+                              (
+                                  await creditLogic.getGuarantyRequests(
+                                      lender.address,
+                                      borrower.address
+                                  )
+                              ).timeRentedUntil
+                          )
+                      );
+                      console.log("yes")
+                      creditLogic = creditLogic.connect(lender);
+                      await creditLogic.guarantyAcceptRequest(borrower.address);
+                      //   await creditLogic.guarantyRaiseRequest(
+                      //       lender.address,
+                      //       wethTokenAddress,
+                      //       gAmount,
+                      //       20
+                      //   );
+                      //   console.log(
+                      //       parseInt(
+                      //           (await creditLogic.getGuarantyRequests(lender.address, borrower.address))
+                      //               .timeRentedUntil
+                      //       )
+                      //   );
+                      //   await creditLogic.guarantyRaiseRequest(lender.address, wethTokenAddress, amount, 10);
+                      //   console.log(
+                      //       parseInt(
+                      //           (await creditLogic.getGuarantyRequests(lender.address, borrower.address))
+                      //               .timeRentedUntil
+                      //       )
+                      //   );
+                      console.log(
+                          await creditLogic.getGuarantyRequests(lender.address, borrower.address)
+                      );
                   });
               });
           });
