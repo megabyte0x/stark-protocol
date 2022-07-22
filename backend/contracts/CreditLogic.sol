@@ -1,15 +1,15 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
 import "./p2p/Deal.sol";
-import "./guaranty/guaranty.sol";
+import "./guaranty/Guaranty.sol";
 import "./interfaces/IStark.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CreditLogic is Context, Ownable {
     deal_contract private dealContract;
-    guaranty_contract private guarantyContract;
+    Guaranty private guarantyContract;
     Istark_protocol starkContract;
 
     address private starkProtocolAddress;
@@ -114,7 +114,7 @@ contract CreditLogic is Context, Ownable {
         );
         require(requestDetails.totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
 
-        starkContract.requestChange_LockBalance(
+        starkContract.lockBalanceChanges(
             requestDetails.tokenAddress,
             _msgSender(),
             _borrower,
@@ -135,7 +135,7 @@ contract CreditLogic is Context, Ownable {
     function guarantyDeploy(address _lender, address _borrower) internal {
         GuarantyRequest memory requestDetails = guarantyRequests[_lender][_borrower];
 
-        guarantyContract = new guaranty_contract(
+        guarantyContract = new Guaranty(
             requestDetails.borrower,
             requestDetails.lender,
             starkProtocolAddress,
@@ -160,9 +160,8 @@ contract CreditLogic is Context, Ownable {
         uint256 _totalAmount,
         uint256 _timeRentedUntil
     ) external {
-
         require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "Err: Already Raised");
-        if(guarantyRequests[_lender][_msgSender()].requestAccepted){
+        if (guarantyRequests[_lender][_msgSender()].requestAccepted) {
             revert();
         }
         GuarantyRequest memory requestDetails;
@@ -176,12 +175,12 @@ contract CreditLogic is Context, Ownable {
         guarantyRequests[_lender][_msgSender()] = requestDetails;
         // emit event to notify lender
     }
-    
+
     // * FUNCTION: To accept the GuarantyRequest made by the borrower
     function guarantyAcceptRequest(address _borrower) external {
         GuarantyRequest memory requestDetails = guarantyRequests[_msgSender()][_borrower];
 
-        // require(!requestDetails.requestAccepted, "ERR:AA"); // AA =>Already Accepted
+        require(!requestDetails.requestAccepted, "ERR: Already Accepted"); // AA =>Already Accepted
 
         uint256 tokenAmountinProtocol = starkContract.getSupplyBalance(
             requestDetails.tokenAddress,
@@ -190,7 +189,7 @@ contract CreditLogic is Context, Ownable {
 
         require(requestDetails.totalAmount <= tokenAmountinProtocol, "ERR: Not Enough Amount"); // NA => Not Enough Amount
 
-        starkContract.requestChange_LockBalance(
+        starkContract.lockBalanceChanges(
             requestDetails.tokenAddress,
             _msgSender(),
             _borrower,
@@ -198,8 +197,6 @@ contract CreditLogic is Context, Ownable {
         );
 
         guarantyRequests[_msgSender()][_borrower].requestAccepted = true;
-
-        
 
         guarantyDeploy(_msgSender(), _borrower);
         // emit event to notify borrower
@@ -210,7 +207,7 @@ contract CreditLogic is Context, Ownable {
     /////////////////////////
 
     // * FUNCTION: To get the p2pRequests made by a particualr address
-    function getP2PRequests(address _lender, address _borrower)
+    function getP2PRequest(address _lender, address _borrower)
         external
         view
         returns (P2PRequest memory)
@@ -219,7 +216,7 @@ contract CreditLogic is Context, Ownable {
     }
 
     // * FUNCTION: To get the p2pRequests made by a particualr address
-    function getGuarantyRequests(address _lender, address _borrower)
+    function getGuarantyRequest(address _lender, address _borrower)
         external
         view
         returns (GuarantyRequest memory)
