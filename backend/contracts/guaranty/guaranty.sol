@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 import "@openzeppelin/contracts/utils/Context.sol";
 import "../interfaces/IStark.sol";
 
-contract guaranty_contract is Context {
+contract Guaranty is Context {
     address private deployer;
     address private borrower;
     address private lender;
@@ -37,7 +37,7 @@ contract guaranty_contract is Context {
         starkContract = Istark_protocol(_starkAddress);
         tokenAddress = _tokenAddress;
 
-        GuarantyDetails memory dealDetails = deal;
+        GuarantyDetails storage dealDetails = deal;
 
         dealDetails.timeRentedSince = block.timestamp;
         dealDetails.timeRentedUntil = block.timestamp + _timeRentedUntil;
@@ -45,7 +45,7 @@ contract guaranty_contract is Context {
     }
 
     modifier onlyBorrower() {
-        require(msg.sender == borrower, "ERR:BO"); // BO => Borrower only
+        require(msg.sender == borrower, "ERR:Borrower only"); // BO => Borrower only
         _;
     }
 
@@ -69,23 +69,25 @@ contract guaranty_contract is Context {
         return deal.totalAmountToPay;
     }
 
-    function repay() external onlyBorrower {
+    function repay(uint256 value) external payable onlyBorrower {
         GuarantyDetails memory dealDetails = deal;
-        require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
+        require(
+            dealDetails.amountPaidTotal < dealDetails.totalAmount,
+            "ERR: No more installments"
+        ); // NM => No more installments
 
-        uint256 value = msg.value;
-        require(value <= 0, "ERR:MA"); // MA => Minimum Amount should be greater than zero
+        // uint256  = msg.value;
+        require(value > 0, "ERR: Minimum Amount should be greater than zero"); // MA => Minimum Amount should be greater than zero
 
-        // (bool success, ) = lender.call{value: value}("");
+        // (bool success,) = lender.call{value: value}("");
         // require(success, "ERR:OT"); //OT => On Transfer
-
+        
         deal.amountPaidTotal += value;
-        deal.totalAmountToPay -= value;
 
-        starkContract.changeBalances(tokenAddress, lender, borrower, value);
+        starkContract.repayChanges(tokenAddress, lender, borrower, value);
 
-        if (dealDetails.amountPaidTotal == dealDetails.totalAmount) {
-            // emit Event
-        }
+        // if (dealDetails.amountPaidTotal == dealDetails.totalAmount) {
+        //     // emit Event
+        // }
     }
 }
