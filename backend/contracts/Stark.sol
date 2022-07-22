@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
@@ -6,8 +7,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-
-pragma solidity ^0.8.15;
 
 error Stark__NeedMoreThanZero(uint256 amount);
 error Stark__NotSupplied();
@@ -19,7 +18,7 @@ error Stark__TransactionFailed();
 error Stark__SorryWeCurrentlyDoNotHaveThisToken(address tokenAddress);
 error Stark__UpKeepNotNeeded();
 
-contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
+contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     address private deployer;
     address[] private s_allowedTokens; // * Array of allowed tokens
     address[] private s_suppliers; // * Array of all suppliers
@@ -384,7 +383,7 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         uint256 amount
     ) private view {
         uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
-            ((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)); // getting value in USD
+            (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) + getTotalLockedValue(userAddress));
 
         (uint256 price, uint256 decimals) = getLatestPrice(tokenAddress);
         uint256 askedAmountValue = amount * (price / 10**decimals);
@@ -578,6 +577,17 @@ contract stark_protocol is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
             totalValue += ((price / 10**decimals) *
                 s_supplyBalances[s_allowedTokens[i]][userAddress]);
+        }
+        return totalValue;
+    }
+
+    function getTotalLockedValue(address userAddress) public view returns (uint256) {
+        uint256 totalValue = 0;
+        for (uint256 i = 0; i < s_allowedTokens.length; i++) {
+            (uint256 price, uint256 decimals) = getLatestPrice(s_allowedTokens[i]);
+
+            totalValue += ((price / 10**decimals) *
+                s_lockedBalances[s_allowedTokens[i]][userAddress]);
         }
         return totalValue;
     }
