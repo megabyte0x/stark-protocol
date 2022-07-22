@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Base64.sol";
 import "@tableland/evm/contracts/ITablelandTables.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
-import "base64-sol/base64.sol";
+import "@tableland/evm/contracts/utils/URITemplate.sol";
 
-contract CreditScore is Context, ERC721URIStorage, Ownable  {
+abstract contract CreditScore is ERC721URIStorage, Ownable, URITemplate {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
@@ -18,20 +18,25 @@ contract CreditScore is Context, ERC721URIStorage, Ownable  {
     string private _metadataTable;
     uint256 private _metadataTableId;
     string private _tablePrefix = "sbt";
+    string private uriTemplate;
 
     address private deployer;
 
     // Our will be pulled from the network
-    string private _baseURIString = "https://testnet.tableland.network/query?s=";
+    string private _baseURIString = "https://testnet.tableland.network/query?mode=list&s=";
 
-    string private constant STARTING_SVG='<svg id="eChK4yXtexE1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" width="450" height="300" style="background-color:';
+    string private constant STARTING_SVG =
+        '<svg id="eChK4yXtexE1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 300" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" width="450" height="300" style="background-color:';
     // in b/w color credit score will come
     // red -> #FF0000
     // yellow -> #fdff00
     // green -> #00FF00
-    string private constant MIDDLE_SVG='"><text dx="0" dy="0" font-family="&quot;Roboto&quot;" font-size="15" font-weight="400" transform="matrix(4.917124 0 0 5.062497 87.876901 175.927052)" stroke-width="0"><tspan y="0" font-weight="400" stroke-width="0">';
+
+    string private constant MIDDLE_SVG =
+        '"><text dx="0" dy="0" font-family="&quot;Roboto&quot;" font-size="15" font-weight="400" transform="matrix(4.917124 0 0 5.062497 87.876901 175.927052)" stroke-width="0"><tspan y="0" font-weight="400" stroke-width="0">';
     // in b/w credit score will come
-    string private constant ENDING_SVG='</tspan></text></svg>';
+
+    string private constant ENDING_SVG = "</tspan></text></svg>";
 
     modifier notMinted() {
         address owner = this.ownerOf(_tokenIds.current());
@@ -56,7 +61,7 @@ contract CreditScore is Context, ERC721URIStorage, Ownable  {
                 "CREATE TABLE ",
                 _tablePrefix,
                 Strings.toString(block.chainid),
-                " (id int, wallet_address address ,external_link text, score int);"
+                " (id int, wallet_address address , score int, image text, description text, name text);"
             )
         );
 
@@ -71,8 +76,34 @@ contract CreditScore is Context, ERC721URIStorage, Ownable  {
             "_",
             Strings.toString(_metadataTableId)
         );
+
+        uriTemplate = getUriTemplate(_metadataTable);
+        string memory base = _baseURI();
+        string memory finalTemplate = string.concat(base, uriTemplate);
+        _setURITemplate(finalTemplate);
+
         deployer = msg.sender;
     }
+
+    function getUriTemplate(string memory _metadataTableName)
+        internal
+        pure
+        returns (string memory)
+    {
+        string memory _uriTemplate = string.concat(
+            "SELECT+json_object%28%27id%27%2C+id%2C+%27name%27%2C+name%2C+%27wallet_address%27%2C+wallet_address%2C+%27score%27%2C+score%2C+%27image%27%2C+image%2C+%27description%27%2C+description+%29+FROM+",
+            _metadataTableName,
+            "+WHERE+id%3D{id}"
+        );
+        return _uriTemplate;
+    }
+
+    // method to set our uriTemplate
+    // function setURITemplate(string memory uriTemplate) internal override {
+    //     string memory base = _baseURI();
+    //     string memory finalTemplate = string.concat(base, uriTemplate);
+    //     _setURITemplate(finalTemplate);
+    // }
 
     /*
      * @dev safeMint allows anyone to mint a token in this project.
@@ -81,49 +112,68 @@ contract CreditScore is Context, ERC721URIStorage, Ownable  {
      */
     function safeMint(address to) public notMinted returns (uint256) {
         uint256 newItemId = _tokenIds.current();
+
+        string memory _image = string.concat(
+            STARTING_SVG,
+            "#fdff00",
+            MIDDLE_SVG,
+            "100",
+            ENDING_SVG
+        );
+
+        string memory finalImage = string.concat(
+            "data:image/svg+xml;base64",
+            Base64.encode(bytes(_image))
+        );
+
         _tableland.runSQL(
             address(this),
             _metadataTableId,
             string.concat(
                 "INSERT INTO ",
                 _metadataTable,
-                " (id, wallet_address, external_link, score) VALUES (",
+                " (id, wallet_address, score, image, description, name) VALUES (",
                 Strings.toString(newItemId),
                 Strings.toHexString(uint256(uint160(msg.sender)), 20),
-                ", 'not.implemented.xyz', 100)"
+                ", '100'",
+                finalImage,
+                ", 'A Credit Score SBT provided by Stark', 'Credit Score' )"
             )
         );
 
-        string memory color = "#fdff00";
-        string memory score = 100;
+        _safeMint(to, newItemId);
+        _tokenURI(newItemId);
+        _tokenIds.increment();
+        return newItemId;
+    }
 
-        if(score > 200) {
+    function changeCredit(uint256 tokenId, uint256 _score) public {
+        // Check token ownership
+        require(this.ownerOf(tokenId) == deployer, "Invalid owner");
+        // Simple on-chain gameplay enforcement
+
+        string memory color = "#fdff00";
+        uint256 score = 100;
+
+        if (score > 150) {
             color = "#00FF00"; // green
         } else if (score < 50) {
             color = "#FF0000"; // red
         }
 
-        string memory _image = string.concat(STARTING_SVG, color, MIDDLE_SVG, Strings.toString(score), ENDING_SVG);
-
-        string memory finalTokenUri = string.concat(
-            '{"name": "Credit Score", "description": "A Credit Score SBT provided by Stark", "image": "data:image/svg+xml;base64,',
-            Base64.encode(bytes(_image)),
-            '"}'
+        string memory _image = string.concat(
+            STARTING_SVG,
+            color,
+            MIDDLE_SVG,
+            Strings.toString(score),
+            ENDING_SVG
         );
 
-        _safeMint(to, newItemId);
-        _setTokenURI(newItemId, finalTokenUri);
-        _tokenIds.increment();
-        return newItemId;
-    }
+        string memory finalImage = string.concat(
+            "data:image/svg+xml;base64,",
+            Base64.encode(bytes(_image))
+        );
 
-    function changeCredit(
-        uint256 tokenId,
-        uint256 _score
-    ) public {
-        // Check token ownership
-        require(this.ownerOf(tokenId) == deployer, "Invalid owner");
-        // Simple on-chain gameplay enforcement
         // Update the row in tableland
         _tableland.runSQL(
             address(this),
@@ -133,6 +183,8 @@ contract CreditScore is Context, ERC721URIStorage, Ownable  {
                 _metadataTable,
                 " SET score = ",
                 Strings.toString(_score),
+                " AND image = ",
+                finalImage,
                 " WHERE id = ",
                 Strings.toString(tokenId),
                 ";"
@@ -145,16 +197,37 @@ contract CreditScore is Context, ERC721URIStorage, Ownable  {
     }
 
     function _beforeTokenTransfer(
-        address from, 
-        address to, 
+        address from,
+        address to,
         uint256 tokenId
-    ) internal override virtual {
-        require(from == address(0), "Err: token transfer is BLOCKED");   
-        super._beforeTokenTransfer(from, to, tokenId);  
+    ) internal virtual override {
+        require(from == address(0), "Err: token transfer is BLOCKED");
+        super._beforeTokenTransfer(from, to, tokenId);
     }
 
     function metadataURI() public view returns (string memory) {
         string memory base = _baseURI();
         return string.concat(base, "SELECT%20*%20FROM%20", _metadataTable);
+    }
+
+    /*
+     * @dev tokenURI is an example of how to turn a row in your table back into
+     * erc721 compliant metadata JSON. Here, we do a simple SELECT statement
+     * with function that converts the result into json.
+     */
+    // function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    //     require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+    //     string memory base = _baseURI();
+
+    //     /* We will give token viewers a way to get at our table metadata */
+    //     return finalTokenUri;
+    // }
+
+    // public method to read the tokenURI
+    function _tokenURI(uint256 tokenId) internal {
+        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+
+        string memory finalTokenURI = _getTokenURI(Strings.toString(tokenId));
+        _setTokenURI(tokenId, finalTokenURI);
     }
 }
