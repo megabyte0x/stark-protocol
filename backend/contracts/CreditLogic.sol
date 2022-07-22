@@ -2,8 +2,8 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "./p2p/Deal.sol";
-import "./guaranty/Guaranty.sol";
+import "./p2p/deal.sol";
+import "./guaranty/guaranty.sol";
 import "./interfaces/IStark.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
