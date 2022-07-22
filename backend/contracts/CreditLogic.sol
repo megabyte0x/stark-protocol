@@ -160,12 +160,12 @@ contract CreditLogic is Context, Ownable {
         uint256 _totalAmount,
         uint256 _timeRentedUntil
     ) external {
-        require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
-        GuarantyRequest memory requestDetails;
 
-        // if(guarantyRequests[_lender][_msgSender()]){
-            
-        // }
+        require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "Err: Already Raised");
+        if(guarantyRequests[_lender][_msgSender()].requestAccepted){
+            revert();
+        }
+        GuarantyRequest memory requestDetails;
 
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
@@ -176,19 +176,19 @@ contract CreditLogic is Context, Ownable {
         guarantyRequests[_lender][_msgSender()] = requestDetails;
         // emit event to notify lender
     }
-
+    
     // * FUNCTION: To accept the GuarantyRequest made by the borrower
     function guarantyAcceptRequest(address _borrower) external {
         GuarantyRequest memory requestDetails = guarantyRequests[_msgSender()][_borrower];
 
-        require(!requestDetails.requestAccepted, "ERR:AA"); // AA =>Already Accepted
+        // require(!requestDetails.requestAccepted, "ERR:AA"); // AA =>Already Accepted
 
         uint256 tokenAmountinProtocol = starkContract.getSupplyBalance(
             requestDetails.tokenAddress,
             _msgSender()
         );
 
-        require(requestDetails.totalAmount <= tokenAmountinProtocol, "ERR:NE"); // NA => Not Enough Amount
+        require(requestDetails.totalAmount <= tokenAmountinProtocol, "ERR: Not Enough Amount"); // NA => Not Enough Amount
 
         starkContract.requestChange_LockBalance(
             requestDetails.tokenAddress,
@@ -198,6 +198,8 @@ contract CreditLogic is Context, Ownable {
         );
 
         guarantyRequests[_msgSender()][_borrower].requestAccepted = true;
+
+        
 
         guarantyDeploy(_msgSender(), _borrower);
         // emit event to notify borrower
