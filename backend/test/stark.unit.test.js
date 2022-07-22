@@ -33,7 +33,6 @@ const { assert, expect } = require("chai");
               );
               // prettier-ignore
               await stark.deployed({ "from": user });
-              
           });
           describe("stark uint tests", function () {
               describe("constructor", function () {
@@ -284,53 +283,84 @@ const { assert, expect } = require("chai");
                   // prettier-ignore
                   await wethToken.approve(stark.address, amount, {"from": user.address});
                   await stark.supply(wethTokenAddress, amount);
-                  console.log("ue yo chal rha hai");
               });
               describe("guaranty raise request", function () {
-                  it("can ask for mutiple", async function () {
+                  it("can't raise mutiple requests", async function () {
                       creditLogic = creditLogic.connect(borrower);
-
                       await creditLogic.guarantyRaiseRequest(
                           lender.address,
                           wethTokenAddress,
                           gAmount,
                           10
                       );
-                      console.log(
-                          parseInt(
-                              (
-                                  await creditLogic.getGuarantyRequests(
-                                      lender.address,
-                                      borrower.address
-                                  )
-                              ).timeRentedUntil
-                          )
-                      );
-                      console.log("yes")
                       creditLogic = creditLogic.connect(lender);
                       await creditLogic.guarantyAcceptRequest(borrower.address);
-                      //   await creditLogic.guarantyRaiseRequest(
-                      //       lender.address,
-                      //       wethTokenAddress,
-                      //       gAmount,
-                      //       20
-                      //   );
-                      //   console.log(
-                      //       parseInt(
-                      //           (await creditLogic.getGuarantyRequests(lender.address, borrower.address))
-                      //               .timeRentedUntil
-                      //       )
-                      //   );
-                      //   await creditLogic.guarantyRaiseRequest(lender.address, wethTokenAddress, amount, 10);
-                      //   console.log(
-                      //       parseInt(
-                      //           (await creditLogic.getGuarantyRequests(lender.address, borrower.address))
-                      //               .timeRentedUntil
-                      //       )
-                      //   );
-                      console.log(
-                          await creditLogic.getGuarantyRequests(lender.address, borrower.address)
+                      await creditLogic.guarantyRaiseRequest(
+                          lender.address,
+                          wethTokenAddress,
+                          gAmount,
+                          20
                       );
+                      creditLogic = creditLogic.connect(borrower);
+                      await expect(
+                          creditLogic.guarantyRaiseRequest(
+                              lender.address,
+                              wethTokenAddress,
+                              amount,
+                              10
+                          )
+                      ).to.be.revertedWith("Err: Already Raised");
+                  });
+                  describe("accept guranty request", function () {
+                      beforeEach(async function () {
+                          creditLogic = creditLogic.connect(borrower);
+                          await creditLogic.guarantyRaiseRequest(
+                              lender.address,
+                              wethTokenAddress,
+                              gAmount,
+                              10
+                          );
+                          creditLogic = creditLogic.connect(lender);
+                          await creditLogic.guarantyAcceptRequest(borrower.address);
+                      });
+                      it("locks balance of lender", async function () {
+                          const balance = await stark.getMaxWithdraw(
+                              wethTokenAddress,
+                              lender.address
+                          );
+                          expect(balance).to.equal(amount.sub(gAmount));
+                      });
+                      it("deploys guranty contract", async function () {
+                          const req = await creditLogic.getGuarantyRequest(
+                              lender.address,
+                              borrower.address
+                          );
+                          assert(req.dealAddress != "0x0000000000000000000000000000000000000000");
+                          console.log(req.dealAddress);
+                      });
+                      it("deploy contract changes balances", async function () {
+                          const req = await creditLogic.getGuarantyRequest(
+                              lender.address,
+                              borrower.address
+                          );
+                          let gurantyContract = await ethers.getContractAt(
+                              "Guaranty",
+                              req.dealAddress
+                          );
+                          gurantyContract = gurantyContract.connect(borrower);
+                          stark = stark.connect(borrower);
+                          await stark.borrow(wethTokenAddress, ethers.utils.parseEther("0.05"));
+                          const bal = await stark.getBorrowedBalance(
+                              wethTokenAddress,
+                              borrower.address
+                          );
+                          await gurantyContract.repay(ethers.utils.parseEther("0.02"));
+                          const bal2 = await stark.getBorrowedBalance(
+                            wethTokenAddress,
+                            borrower.address
+                        );
+                         expect(bal2).to.equal(bal.sub(ethers.utils.parseEther("0.02")))
+                      });
                   });
               });
           });
