@@ -23,6 +23,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     address[] private s_allowedTokens; // * Array of allowed tokens
     address[] private s_suppliers; // * Array of all suppliers
     address[] private s_borrowers; // * Array of all borrowers
+    address[] private s_allowedContracts;
     uint256 private immutable i_interval; // * Chainlink keepers Interval
     uint256 private s_lastTimeStamp; // * Time stamp for chainlink keepers
 
@@ -85,7 +86,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     mapping(address => mapping(address => bool)) private s_guarantys;
 
     // contractAddress -> permission to modify the data in this contract
-    mapping(address => bool) private s_allowedContracts;
+    // mapping(address => bool) private s_allowedContracts;
 
     /////////////////////
     ///   Modifiers   ///
@@ -129,15 +130,15 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         _;
     }
 
-    // * MODIFIER: Check whether the intracting contract is the deployer.
-    modifier onlyDeployer() {
-        require(msg.sender == deployer, "ERR:NA"); // NA=> Not Allowed
-        _;
-    }
-
     // * MODIFIER: Check whether the contract address is allowed to modify values.
     modifier onlyAllowedContracts(address _contractAddress) {
-        require(s_allowedContracts[_contractAddress], "ERR:NA"); // NA=>  Not Allowed
+        bool execute;
+        for (uint256 i = 0; i < s_allowedContracts.length; i++) {
+            if (s_allowedContracts[i] == _contractAddress) {
+                execute = true;
+            }
+        }
+        require(execute, "not onlyAllowedContracts");
         _;
     }
 
@@ -156,7 +157,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         }
         i_interval = updateInterval;
         s_lastTimeStamp = block.timestamp;
-        deployer = msg.sender;
+        s_allowedContracts.push(msg.sender);
     }
 
     // * FUNCTION: Users can supply tokens
@@ -383,7 +384,8 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         uint256 amount
     ) private view {
         uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
-            (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) + getTotalLockedValue(userAddress));
+            (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) +
+                getTotalLockedValue(userAddress));
 
         (uint256 price, uint256 decimals) = getLatestPrice(tokenAddress);
         uint256 askedAmountValue = amount * (price / 10**decimals);
@@ -510,7 +512,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     }
 
     function getSupplyBalance(address tokenAddress, address userAddress)
-        external
+        public
         view
         returns (uint256)
     {
@@ -542,7 +544,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     // * FUNCTION: returns max borrow allowed to a user
     function getMaxBorrow(address userAddress) public view returns (uint256) {
         uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
-            ((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80));
+            (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) + getTotalLockedValue(userAddress));
 
         return (availableAmountValue * uint256(80)) / uint256(100);
     }
@@ -553,7 +555,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         returns (uint256)
     {
         uint256 availableAmount = s_supplyBalances[tokenAddress][userAddress] -
-            ((uint256(100) * s_borrowedBalances[tokenAddress][userAddress]) / uint256(80));
+            (((uint256(100) * s_borrowedBalances[tokenAddress][userAddress]) / uint256(80)) + s_lockedBalances[tokenAddress][userAddress]);
 
         return availableAmount;
     }
@@ -564,7 +566,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         returns (uint256)
     {
         uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
-            ((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80));
+            (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) + getTotalLockedValue(userAddress));
 
         (uint256 price, uint256 decimals) = getLatestPrice(tokenAddress);
         return ((availableAmountValue / (price / 10**decimals)) * uint256(80)) / uint256(100);
@@ -634,9 +636,14 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         return i_interval;
     }
 
-    ////////////////////////////
-    ///   Interface Functions   ///
-    ////////////////////////////
+    /////////////////////////////
+    ///   Interface Functions ///
+    /////////////////////////////
+
+    // function setCreditLogicContract(address _starkProtocolAddress) external onlyOwner {
+    //     starkContract = Istark_protocol(_starkProtocolAddress);
+    //     starkProtocolAddress = _starkProtocolAddress;
+    // }
 
     // * FUNCTION: To Lock the Balance of the lender
     function requestChange_LockBalance(
@@ -644,13 +651,13 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address _lender,
         address _borrower,
         uint256 _tokenAmount
-    ) external onlyDeployer {
-        s_supplyBalances[_tokenAddress][_lender] -= _tokenAmount;
+    ) public onlyAllowedContracts(msg.sender) {
         s_lockedBalances[_tokenAddress][_lender] += _tokenAmount;
+        s_supplyBalances[_tokenAddress][_borrower] += _tokenAmount;
 
         // emit Event to Lender that his funds are locked
 
-        requestChange_LendBalance(_tokenAddress, _borrower, _tokenAmount);
+        // requestChange_LendBalance(_tokenAddress, _borrower, _tokenAmount);
     }
 
     // * FUNCTION: To transfer the funds to the Borrower Balance
@@ -661,15 +668,17 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     ) internal {
         s_supplyBalances[_tokenAddress][_borrower] += _tokenAmount;
 
-        s_totalSupply[_tokenAddress] -= _tokenAmount; 
+        s_totalSupply[_tokenAddress] -= _tokenAmount;
 
         // emit Event to Borrower that he received the funds
     }
 
     // * FUNCTION: Deployer will add the guaranty contract in the List.
-    function addAllowContracts(address _contractAddress) external onlyDeployer {
-        s_allowedContracts[_contractAddress] = true;
-
+    function addAllowContracts(address _contractAddress)
+        external
+        onlyAllowedContracts(msg.sender)
+    {
+        s_allowedContracts.push(_contractAddress);
         // emit Event (optional)
     }
 
