@@ -138,8 +138,6 @@ contract deal_contract is Context {
         require(dealDetails.noOfInstalments > 0, "ERR:NM"); // NM => No more installments
         require(dealDetails.amountPaidTotal < dealDetails.totalAmount, "ERR:NM"); // NM => No more installments
 
-        // uint256 value = msg.value;
-
         // * amtToLenderOnly: Amount with standard interest
         uint256 amtToLenderOnly = dealDetails.instalmentAmt;
 
@@ -167,21 +165,20 @@ contract deal_contract is Context {
 
             // (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
             // require(successInBorrower, "ERR:OT"); //OT => On Transfer
-
+            deal.amountPaidTotal += amtToLender;
+            deal.totalAmountToPay -= amtToLender;
             //! TODO: Function to pass the value to the protocol
-            
         } else {
-
             starkContract.changeBalances(
                 dealDetails.tokenAddress,
                 lender,
                 borrower,
                 amtToLenderOnly
             );
-        }
 
-        deal.amountPaidTotal += value;
-        deal.totalAmountToPay -= value;
+            deal.amountPaidTotal += amtToLenderOnly;
+            deal.totalAmountToPay -= amtToLenderOnly;
+        }
         --deal.noOfInstalments;
     }
 
