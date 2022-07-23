@@ -330,31 +330,17 @@ const { assert, expect } = require("chai");
                       const balance = await stark.getMaxWithdraw(wethTokenAddress, lender.address);
                       expect(balance).to.equal(amount.sub(gAmount));
                   });
-                  it("deploys guranty contract", async function () {
-                      const req = await creditLogic.getGuarantyRequest(
-                          lender.address,
-                          borrower.address
-                      );
-                      assert(req.dealAddress != "0x0000000000000000000000000000000000000000");
-                      console.log(req.dealAddress);
-                  });
-                  it("deploy contract changes balances", async function () {
-                      const req = await creditLogic.getGuarantyRequest(
-                          lender.address,
-                          borrower.address
-                      );
-                      let gurantyContract = await ethers.getContractAt(
-                          "Guaranty",
-                          req.dealAddress
-                      );
-                      gurantyContract = gurantyContract.connect(borrower);
+                  it("changes balances when repay", async function () {        
                       stark = stark.connect(borrower);
                       await stark.borrow(wethTokenAddress, ethers.utils.parseEther("0.05"));
                       const bal = await stark.getBorrowedBalance(
                           wethTokenAddress,
                           borrower.address
                       );
-                      await gurantyContract.repay(ethers.utils.parseEther("0.02"));
+                      const repayAmount = ethers.utils.parseEther("0.02");
+                      await wethToken.connect(borrower).approve(stark.address, repayAmount, { "from": borrower.address });
+                      console.log(ethers.utils.formatEther(await wethToken.balanceOf(borrower.address)));
+                      await stark.repay(wethTokenAddress, repayAmount);
                       const bal2 = await stark.getBorrowedBalance(
                           wethTokenAddress,
                           borrower.address
@@ -423,7 +409,7 @@ const { assert, expect } = require("chai");
                       assert(req.dealAddress != "0x0000000000000000000000000000000000000000");
                       console.log(req.dealAddress);
                   });
-                  it("deploy contract changes balances", async function () {
+                  it("deploy p2p contract changes balances", async function () {
                       const req = await creditLogic.getP2PRequest(
                           lender.address,
                           borrower.address
