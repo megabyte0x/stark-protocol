@@ -96,7 +96,10 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     modifier hasSupplied() {
         bool success;
         for (uint256 i = 0; i < s_allowedTokens.length; i++) {
-            if (s_supplyBalances[s_allowedTokens[i]][msg.sender] > 0) {
+            if (
+                s_supplyBalances[s_allowedTokens[i]][msg.sender] > 0 ||
+                s_allowedBalances[s_allowedTokens[i]][msg.sender] > 0
+            ) {
                 success = true;
             }
         }
@@ -383,7 +386,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         address userAddress,
         uint256 amount
     ) private view {
-        uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
+        uint256 availableAmountValue = (getTotalSupplyValue(userAddress)) -
             (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) +
                 getTotalLockedValue(userAddress));
 
@@ -543,7 +546,8 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
     // * FUNCTION: returns max borrow allowed to a user
     function getMaxBorrow(address userAddress) public view returns (uint256) {
-        uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
+        uint256 availableAmountValue = (getTotalSupplyValue(userAddress) +
+            getTotalAllowedValue(userAddress)) -
             (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) +
                 getTotalLockedValue(userAddress));
 
@@ -567,7 +571,8 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         view
         returns (uint256)
     {
-        uint256 availableAmountValue = getTotalSupplyValue(userAddress) -
+        uint256 availableAmountValue = (getTotalSupplyValue(userAddress) +
+            getTotalAllowedValue(userAddress)) -
             (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) +
                 getTotalLockedValue(userAddress));
 
@@ -593,6 +598,17 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
             totalValue += ((price / 10**decimals) *
                 s_lockedBalances[s_allowedTokens[i]][userAddress]);
+        }
+        return totalValue;
+    }
+
+    function getTotalAllowedValue(address userAddress) public view returns (uint256) {
+        uint256 totalValue = 0;
+        for (uint256 i = 0; i < s_allowedTokens.length; i++) {
+            (uint256 price, uint256 decimals) = getLatestPrice(s_allowedTokens[i]);
+
+            totalValue += ((price / 10**decimals) *
+                s_allowedBalances[s_allowedTokens[i]][userAddress]);
         }
         return totalValue;
     }
@@ -649,6 +665,9 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     // }
 
     // * FUNCTION: To Lock the Balance of the lender
+
+    mapping(address => mapping(address => uint256)) s_allowedBalances;
+
     function lockBalanceChanges(
         address _tokenAddress,
         address _lender,
@@ -656,7 +675,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         uint256 _tokenAmount
     ) public onlyAllowedContracts(msg.sender) {
         s_lockedBalances[_tokenAddress][_lender] += _tokenAmount;
-        s_supplyBalances[_tokenAddress][_borrower] += _tokenAmount;
+        s_allowedBalances[_tokenAddress][_borrower] += _tokenAmount;
 
         // emit Event to Lender that his funds are locked
 
