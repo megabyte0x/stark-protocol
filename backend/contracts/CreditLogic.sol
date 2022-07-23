@@ -7,17 +7,15 @@ import "./interfaces/IStark.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CreditLogic is Context, Ownable {
-<<<<<<< HEAD
     deal_contract private dealContract;
     Istark_protocol starkContract;
 
     address private starkProtocolAddress;
-=======
+
     // deal_contract private dealContract;
     Istark_protocol starkContract;
     address private starkProtocolAddress;
     address[] private borrowers;
->>>>>>> 074c85e (frontend ready)
 
     function setStarkAddress(address _starkProtocolAddress) external onlyOwner {
         starkContract = Istark_protocol(_starkProtocolAddress);
@@ -135,11 +133,7 @@ contract CreditLogic is Context, Ownable {
 
     ////////////////////////////
     ///// guaranty functions ///
-<<<<<<< HEAD
     ///////////////////////////
-=======
-    ////////////////////////////
->>>>>>> 074c85e (frontend ready)
 
     // * FUNCTION: To raise the request for backing the loan from the protocol
     function guarantyRaiseRequest(
@@ -151,19 +145,13 @@ contract CreditLogic is Context, Ownable {
         require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "Err: Already Raised");
 
         GuarantyRequest memory requestDetails;
-<<<<<<< HEAD
 
-=======
->>>>>>> 074c85e (frontend ready)
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
         requestDetails.totalAmount = _totalAmount;
         requestDetails.timeRentedUntil = _timeRentedUntil;
         requestDetails.tokenAddress = _tokenAddress;
-<<<<<<< HEAD
-=======
         borrowers.push(_msgSender());
->>>>>>> 074c85e (frontend ready)
 
         guarantyRequests[_lender][_msgSender()] = requestDetails;
         // emit event to notify lender
@@ -214,11 +202,8 @@ contract CreditLogic is Context, Ownable {
     {
         return guarantyRequests[_lender][_borrower];
     }
-<<<<<<< HEAD
-=======
 
     function getBorrowers() external view returns (address[] memory) {
         return borrowers;
     }
->>>>>>> 074c85e (frontend ready)
 }
