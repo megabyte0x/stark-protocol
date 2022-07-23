@@ -2,9 +2,12 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IStark.sol";
 
 contract deal_contract is Context {
+    using SafeMath for uint256;
+
     address private deployer;
     address private borrower;
     address private lender;
@@ -49,7 +52,7 @@ contract deal_contract is Context {
         lender = _lender;
         starkContract = Istark_protocol(_starkAddress);
 
-        DealDetials memory dealDetails = deal;
+        DealDetials storage dealDetails = deal;
 
         dealDetails.noOfInstalments = _noOfInstalments;
         dealDetails.totalAmount = _totalAmount;
@@ -88,8 +91,9 @@ contract deal_contract is Context {
     // * FUNCTION: To get the Instalment Amount
     function getInstalmentAmount(uint256 _instalmentAmount) public view returns (uint256) {
         DealDetials memory dealDetails = deal;
-        uint256 interestAmount = (_instalmentAmount * dealDetails.interestRate) /
-            (dealDetails.noOfInstalments * 100);
+        uint256 interestAmount = (_instalmentAmount * dealDetails.interestRate).div(
+            uint256(dealDetails.noOfInstalments  * 100)
+        );
 
         uint256 instalmentAmount = _instalmentAmount + interestAmount;
         return instalmentAmount;
