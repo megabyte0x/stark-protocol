@@ -7,11 +7,6 @@ import "./interfaces/IStark.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CreditLogic is Context, Ownable {
-    deal_contract private dealContract;
-    Istark_protocol starkContract;
-
-    address private starkProtocolAddress;
-
     // deal_contract private dealContract;
     Istark_protocol starkContract;
     address private starkProtocolAddress;
