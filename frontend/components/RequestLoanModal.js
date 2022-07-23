@@ -20,23 +20,6 @@ export default function RequestLoanModal({ isVisible, onClose, address }) {
     const [showP2PModal, setShowP2PModal] = useState(false);
     const dispatch = useNotification();
 
-    async function updateUI() {
-        const { ethereum } = window;
-        const provider = await new ethers.providers.Web3Provider(ethereum);
-        const signer = await provider.getSigner();
-        const contractAddress = await contractAddresses["Stark"][parseInt(chainId)][0];
-        const contract = await new ethers.Contract(contractAddress, starkAbi, signer);
-        const availableTokens = await contract.getMaxTokenBorrow(
-            tokenAddresses[borrowIndex],
-            account
-        );
-        setAvailableTokens(ethers.utils.formatEther(availableTokens));
-    }
-
-    // useEffect(() => {
-    //     updateUI();
-    // }, [isWeb3Enabled, borrowAmount, tokenBalances]);
-
     return (
         <div className="pt-2">
             <Modal
@@ -87,10 +70,7 @@ export default function RequestLoanModal({ isVisible, onClose, address }) {
             <GuarantyModal
                 isVisible={showGuarantyModal}
                 onClose={() => setShowGuarantyModal(false)}
-<<<<<<< HEAD
-=======
                 address={address}
->>>>>>> 074c85e (frontend ready)
             />
             <P2PModal isVisible={showP2PModal} onClose={() => setShowP2PModal(false)} />
         </div>
