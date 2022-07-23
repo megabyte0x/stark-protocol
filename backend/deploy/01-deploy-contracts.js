@@ -38,7 +38,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         log: true,
         args: [],
         waitConfirmations: waitConfirmations,
-<<<<<<< HEAD
     })
 
     await stark.addAllowContracts(creditLogic.address);
@@ -49,7 +48,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         await verify(stark.address, args);
         await verify(creditLogic.address, []);
 
-=======
     });
 
     log("-------------------------------------------------");
@@ -66,7 +64,6 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     if (!developmentChains.includes(network.name)) {
         await verify(stark.address, args);
         await verify(creditLogic.address, []);
->>>>>>> 074c85e (frontend ready)
     }
 };
 
