@@ -33,9 +33,21 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         waitConfirmations: waitConfirmations,
     });
 
+    const creditLogic = await deploy("CreditLogic", {
+        from: deployer,
+        log: true,
+        args: [],
+        waitConfirmations: waitConfirmations,
+    })
+
+    await stark.addAllowContracts(creditLogic.address);
+    await creditLogic.setStarkAddress(stark.address);
+
     log("-------------------------");
     if (!developmentChains.includes(network.name)) {
         await verify(stark.address, args);
+        await verify(creditLogic.address, []);
+
     }
 };
 
