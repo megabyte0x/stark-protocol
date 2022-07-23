@@ -125,7 +125,7 @@ contract deal_contract is Context {
         uint256 amountLeftToPay = getTotalAmountLeft();
         // require(value == amountLeftToPay, "ERR:WV"); // WV => Wrong value
 
-        starkContract.changeBalances(dealDetails.tokenAddress, lender, borrower, amountLeftToPay);
+        starkContract.repayChanges(dealDetails.tokenAddress, lender, borrower, amountLeftToPay);
 
         deal.amountPaidTotal += amountLeftToPay;
         deal.totalAmountToPay -= amountLeftToPay;
@@ -161,7 +161,7 @@ contract deal_contract is Context {
             // (bool successInLender, ) = lender.call{value: amtToLender}("");
             // require(successInLender, "ERR:OT"); //OT => On Transfer
 
-            starkContract.changeBalances(dealDetails.tokenAddress, lender, borrower, amtToLender);
+            starkContract.repayChanges(dealDetails.tokenAddress, lender, borrower, amtToLender);
 
             // (bool successInBorrower, ) = deployer.call{value: amtToProtocol}("");
             // require(successInBorrower, "ERR:OT"); //OT => On Transfer
@@ -169,7 +169,7 @@ contract deal_contract is Context {
             deal.totalAmountToPay -= amtToLender;
             //! TODO: Function to pass the value to the protocol
         } else {
-            starkContract.changeBalances(
+            starkContract.repayChanges(
                 dealDetails.tokenAddress,
                 lender,
                 borrower,
