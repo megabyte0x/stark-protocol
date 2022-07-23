@@ -2,14 +2,12 @@
 pragma solidity 0.8.15;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-import "./p2p/deal.sol";
-import "./guaranty/guaranty.sol";
+import "./p2p/Deal.sol";
 import "./interfaces/IStark.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract CreditLogic is Context, Ownable {
     deal_contract private dealContract;
-    Guaranty private guarantyContract;
     Istark_protocol starkContract;
 
     address private starkProtocolAddress;
@@ -132,27 +130,6 @@ contract CreditLogic is Context, Ownable {
     ///// guaranty functions ///
     ///////////////////////////
 
-    function guarantyDeploy(address _lender, address _borrower) internal {
-        GuarantyRequest memory requestDetails = guarantyRequests[_lender][_borrower];
-
-        guarantyContract = new Guaranty(
-            requestDetails.borrower,
-            requestDetails.lender,
-            starkProtocolAddress,
-            requestDetails.tokenAddress,
-            requestDetails.totalAmount,
-            requestDetails.timeRentedUntil
-        );
-
-        guarantyRequests[requestDetails.lender][requestDetails.borrower].dealAddress = address(
-            guarantyContract
-        );
-
-        starkContract.addAllowContracts(address(guarantyContract));
-
-        // emit Event to notify both lender and borrower
-    }
-
     // * FUNCTION: To raise the request for backing the loan from the protocol
     function guarantyRaiseRequest(
         address _lender,
@@ -161,9 +138,7 @@ contract CreditLogic is Context, Ownable {
         uint256 _timeRentedUntil
     ) external {
         require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "Err: Already Raised");
-        if (guarantyRequests[_lender][_msgSender()].requestAccepted) {
-            revert();
-        }
+
         GuarantyRequest memory requestDetails;
 
         requestDetails.borrower = _msgSender();
@@ -197,8 +172,6 @@ contract CreditLogic is Context, Ownable {
         );
 
         guarantyRequests[_msgSender()][_borrower].requestAccepted = true;
-
-        guarantyDeploy(_msgSender(), _borrower);
         // emit event to notify borrower
     }
 
