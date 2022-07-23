@@ -1,6 +1,6 @@
 # Contracts
 
-There are two contracts as of now
+There are two contracts as of now=>
 
 - ## `Deal.sol`
 **This is the main contract handling all the transactions functionality.**
