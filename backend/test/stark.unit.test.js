@@ -330,24 +330,19 @@ const { assert, expect } = require("chai");
                       const balance = await stark.getMaxWithdraw(wethTokenAddress, lender.address);
                       expect(balance).to.equal(amount.sub(gAmount));
                   });
-<<<<<<< HEAD
                   it("changes balances when repay", async function () {        
                       stark = stark.connect(borrower);
                       await stark.borrow(wethTokenAddress, ethers.utils.parseEther("0.05"));
-=======
                   it("changes balances when repay", async function () {
                       stark = stark.connect(borrower);
                       await stark.borrow(wethTokenAddress, gAmount);
->>>>>>> 074c85e (frontend ready)
                       const bal = await stark.getBorrowedBalance(
                           wethTokenAddress,
                           borrower.address
                       );
-<<<<<<< HEAD
                       const repayAmount = ethers.utils.parseEther("0.02");
                       await wethToken.connect(borrower).approve(stark.address, repayAmount, { "from": borrower.address });
                       console.log(ethers.utils.formatEther(await wethToken.balanceOf(borrower.address)));
-=======
                       const repayAmount = gAmount;
                       await wethToken
                           .connect(borrower)
@@ -355,13 +350,11 @@ const { assert, expect } = require("chai");
                       console.log(
                           ethers.utils.formatEther(await wethToken.balanceOf(borrower.address))
                       );
->>>>>>> 074c85e (frontend ready)
                       await stark.repay(wethTokenAddress, repayAmount);
                       const bal2 = await stark.getBorrowedBalance(
                           wethTokenAddress,
                           borrower.address
                       );
-<<<<<<< HEAD
                       expect(bal2).to.equal(bal.sub(ethers.utils.parseEther("0.02")));
                   });
               });
@@ -452,7 +445,6 @@ const { assert, expect } = require("chai");
             //           expect(bal2).to.equal(bal.sub(ethers.utils.parseEther("0.02")));
             //       });
             //   });
-=======
                       expect(bal2).to.equal(bal.sub(gAmount));
                       const max = await stark.getMaxWithdraw(wethTokenAddress, user.address);
                       const supply = await stark.getSupplyBalance(wethTokenAddress, user.address);
@@ -546,6 +538,5 @@ const { assert, expect } = require("chai");
               //           expect(bal2).to.equal(bal.sub(ethers.utils.parseEther("0.02")));
               //       });
               //   });
->>>>>>> 074c85e (frontend ready)
           });
       });
