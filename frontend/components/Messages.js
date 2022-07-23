@@ -28,14 +28,6 @@ export default function Messages({ address, conversation }) {
         return string;
     }
 
-    function getDate() {
-        const date = new Date();
-        const hour = date.getHours();
-        const min = date.getMinutes();
-
-        return `${hour}:${min}`;
-    }
-
     useEffect(() => {
         updateUI();
     }, [isWeb3Enabled, conversation]);

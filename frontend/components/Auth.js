@@ -147,7 +147,15 @@ export default function Auth() {
                             onClick={() => setShowModal(true)}
                         />
                     </div>
+<<<<<<< HEAD
                     <RequestLoanModal isVisible={showModal} onClose={() => setShowModal(false)} />
+=======
+                    <RequestLoanModal
+                        isVisible={showModal}
+                        onClose={() => setShowModal(false)}
+                        address={address}
+                    />
+>>>>>>> 074c85e (frontend ready)
                 </div>
             )}
         </div>

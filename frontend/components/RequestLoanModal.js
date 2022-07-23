@@ -7,7 +7,11 @@ import { ethers } from "ethers";
 import GuarantyModal from "./GuarantyModal";
 import P2PModal from "./P2PModal";
 
+<<<<<<< HEAD
 export default function RequestLoanModal({ isVisible, onClose }) {
+=======
+export default function RequestLoanModal({ isVisible, onClose, address }) {
+>>>>>>> 074c85e (frontend ready)
     const [borrowAmount, setBorrowAmount] = useState("0");
     const { isWeb3Enabled, account, chainId } = useMoralis();
     const [isOkDisabled, setIsOkDisabled] = useState(false);
@@ -83,6 +87,10 @@ export default function RequestLoanModal({ isVisible, onClose }) {
             <GuarantyModal
                 isVisible={showGuarantyModal}
                 onClose={() => setShowGuarantyModal(false)}
+<<<<<<< HEAD
+=======
+                address={address}
+>>>>>>> 074c85e (frontend ready)
             />
             <P2PModal isVisible={showP2PModal} onClose={() => setShowP2PModal(false)} />
         </div>
