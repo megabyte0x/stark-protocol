@@ -43,15 +43,15 @@ contract CreditLogic is Context, Ownable {
     // guarantyRequests[_lender][_borrower]
     mapping(address => mapping(address => GuarantyRequest)) private guarantyRequests;
 
-    // // * To store all the p2pRequests made in the protocol
-    // // lender & borrower -> request
+    // * To store all the p2pRequests made in the protocol
+    // lender & borrower -> request
     // mapping(address => mapping(address => P2PRequest)) private p2pRequests;
 
     ///////////////////////
     //// p2p functions ///
     //////////////////////
 
-    // // * FUNCTION: To deploy the Deal Contract
+    // * FUNCTION: To deploy the Deal Contract
     // function p2pDeploy(address _lender, address _borrower) internal {
     //     P2PRequest memory requestDetails = p2pRequests[_lender][_borrower];
 
@@ -179,7 +179,7 @@ contract CreditLogic is Context, Ownable {
     ///// getter functions ///
     /////////////////////////
 
-    // // * FUNCTION: To get the p2pRequests made by a particualr address
+    // * FUNCTION: To get the p2pRequests made by a particualr address
     // function getP2PRequest(address _lender, address _borrower)
     //     external
     //     view
@@ -188,12 +188,12 @@ contract CreditLogic is Context, Ownable {
     //     return p2pRequests[_lender][_borrower];
     // }
 
-    // // * FUNCTION: To get the p2pRequests made by a particualr address
-    // function getGuarantyRequest(address _lender, address _borrower)
-    //     external
-    //     view
-    //     returns (GuarantyRequest memory)
-    // {
-    //     return guarantyRequests[_lender][_borrower];
-    // }
+    // * FUNCTION: To get the p2pRequests made by a particualr address
+    function getGuarantyRequest(address _lender, address _borrower)
+        external
+        view
+        returns (GuarantyRequest memory)
+    {
+        return guarantyRequests[_lender][_borrower];
+    }
 }
