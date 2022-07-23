@@ -558,10 +558,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
     // * FUNCTION: returns max borrow allowed to a user
     function getMaxBorrow(address userAddress) public view returns (uint256) {
-<<<<<<< HEAD
-=======
         if (getTotalAllowedValue(userAddress) > 0) return getTotalAllowedValue(userAddress);
->>>>>>> 074c85e (frontend ready)
         uint256 availableAmountValue = (getTotalSupplyValue(userAddress) +
             getTotalAllowedValue(userAddress)) -
             (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) +
@@ -687,10 +684,8 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     // * FUNCTION: To Lock the Balance of the lender
 
     mapping(address => mapping(address => uint256)) s_allowedBalances;
-<<<<<<< HEAD
-=======
+
     mapping(address => address[]) s_lenders;
->>>>>>> 074c85e (frontend ready)
 
     function lockBalanceChanges(
         address _tokenAddress,
@@ -700,10 +695,7 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     ) public onlyAllowedContracts(msg.sender) {
         s_lockedBalances[_tokenAddress][_lender] += _tokenAmount;
         s_allowedBalances[_tokenAddress][_borrower] += _tokenAmount;
-<<<<<<< HEAD
-=======
         s_lenders[_borrower].push(_lender);
->>>>>>> 074c85e (frontend ready)
 
         // emit Event to Lender that his funds are locked
 
