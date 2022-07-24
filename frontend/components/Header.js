@@ -11,8 +11,8 @@ export default function Header() {
                 <Link href="/">
                     <a className="mr-3 p-6">Home</a>
                 </Link>
-                <Link href="/no-collateral">
-                    <a className="mr-3 p-6">No Collteral</a>
+                <Link href="/guaranty">
+                    <a className="mr-3 p-6">Guaranty</a>
                 </Link>
                 <Link href="/chat">
                     <a className="mr-3 p-6">Chat</a>
