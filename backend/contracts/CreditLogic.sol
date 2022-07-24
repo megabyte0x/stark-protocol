@@ -11,6 +11,7 @@ contract CreditLogic is Context, Ownable {
     Istark_protocol starkContract;
     address private starkProtocolAddress;
     address[] private borrowers;
+    address[] private lenders;
 
     function setStarkAddress(address _starkProtocolAddress) external onlyOwner {
         starkContract = Istark_protocol(_starkProtocolAddress);
@@ -36,6 +37,7 @@ contract CreditLogic is Context, Ownable {
         address tokenAddress;
         uint256 totalAmount; // * Amount looking for the guaranty
         uint256 timeRentedUntil;
+        uint256 timeRentedSince;
         bool requestAccepted; // * Request Raised by the lender accepted or not
     }
 
@@ -128,7 +130,7 @@ contract CreditLogic is Context, Ownable {
 
     ////////////////////////////
     ///// guaranty functions ///
-    ///////////////////////////
+    ////////////////////////////
 
     // * FUNCTION: To raise the request for backing the loan from the protocol
     function guarantyRaiseRequest(
@@ -140,7 +142,6 @@ contract CreditLogic is Context, Ownable {
         require(!guarantyRequests[_lender][_msgSender()].requestAccepted, "Err: Already Raised");
 
         GuarantyRequest memory requestDetails;
-
         requestDetails.borrower = _msgSender();
         requestDetails.lender = _lender;
         requestDetails.totalAmount = _totalAmount;
@@ -172,6 +173,10 @@ contract CreditLogic is Context, Ownable {
             requestDetails.totalAmount
         );
 
+        lenders.push(_msgSender());
+
+        requestDetails.timeRentedSince = block.timestamp;
+
         guarantyRequests[_msgSender()][_borrower].requestAccepted = true;
         // emit event to notify borrower
     }
@@ -200,5 +205,9 @@ contract CreditLogic is Context, Ownable {
 
     function getBorrowers() external view returns (address[] memory) {
         return borrowers;
+    }
+
+    function getLenders() external view returns (address[] memory) {
+        return lenders;
     }
 }
