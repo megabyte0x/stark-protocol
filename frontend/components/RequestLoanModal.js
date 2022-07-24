@@ -7,11 +7,7 @@ import { ethers } from "ethers";
 import GuarantyModal from "./GuarantyModal";
 import P2PModal from "./P2PModal";
 
-<<<<<<< HEAD
-export default function RequestLoanModal({ isVisible, onClose }) {
-=======
 export default function RequestLoanModal({ isVisible, onClose, address }) {
->>>>>>> 074c85e (frontend ready)
     const [borrowAmount, setBorrowAmount] = useState("0");
     const { isWeb3Enabled, account, chainId } = useMoralis();
     const [isOkDisabled, setIsOkDisabled] = useState(false);
@@ -19,6 +15,23 @@ export default function RequestLoanModal({ isVisible, onClose, address }) {
     const [showGuarantyModal, setShowGuarantyModal] = useState(false);
     const [showP2PModal, setShowP2PModal] = useState(false);
     const dispatch = useNotification();
+
+    async function updateUI() {
+        const { ethereum } = window;
+        const provider = await new ethers.providers.Web3Provider(ethereum);
+        const signer = await provider.getSigner();
+        const contractAddress = await contractAddresses["Stark"][parseInt(chainId)][0];
+        const contract = await new ethers.Contract(contractAddress, starkAbi, signer);
+        const availableTokens = await contract.getMaxTokenBorrow(
+            tokenAddresses[borrowIndex],
+            account
+        );
+        setAvailableTokens(ethers.utils.formatEther(availableTokens));
+    }
+
+    // useEffect(() => {
+    //     updateUI();
+    // }, [isWeb3Enabled, borrowAmount, tokenBalances]);
 
     return (
         <div className="pt-2">
