@@ -18,13 +18,6 @@ function MyApp({ Component, pageProps }) {
                     <Component {...pageProps} />
                 </NotificationProvider>
             </MoralisProvider>
-            <footer className="fixed bottom-0 left-2">
-                <p className="footer__copyright">
-                    <a target="_blank" href="https://twitter.com/harendrashakya_">
-                        © Harendra Shakya
-                    </a>
-                </p>
-            </footer>
         </div>
     );
 }
