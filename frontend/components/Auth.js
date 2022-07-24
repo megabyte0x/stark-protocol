@@ -15,6 +15,7 @@ export default function Auth() {
     const [conversation, setConversation] = useState();
     const [message, setMessage] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [connected, setConnected] = useState(false);
 
     async function sign() {
         setButtonDisabled(true);
@@ -32,6 +33,7 @@ export default function Auth() {
             if (!signed) return;
             const conversation = await xmtp.conversations.newConversation(address);
             setConversation(conversation);
+            setConnected(true);
         } catch (e) {
             console.log("This error is coming from chat Auth component");
             console.log(e);
@@ -83,7 +85,7 @@ export default function Auth() {
                                 <div className="p-2">
                                     <Input
                                         name="message"
-                                        width="100px"
+                                        width="90px"
                                         prefixIcon="eth"
                                         onChange={(e) => {
                                             setAddress(e.target.value);
@@ -101,6 +103,7 @@ export default function Auth() {
                                     onClick={() => chat()}
                                     isLoading={buttonDisabled}
                                 />
+                                <div className="p-2 pl-24 text-white">Powered by XMTP</div>
                             </Hero>
                         </div>
                     </div>
@@ -133,7 +136,7 @@ export default function Auth() {
                             type="button"
                             size="large"
                             onClick={() => handleSend()}
-                            isLoading={buttonDisabled}
+                            disabled={!connected}
                         />
                     </div>
                     <div className="absolute bottom-8 right-4">
@@ -145,6 +148,7 @@ export default function Auth() {
                             type="button"
                             size="large"
                             onClick={() => setShowModal(true)}
+                            disabled={!connected}
                         />
                     </div>
 

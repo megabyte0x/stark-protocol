@@ -31,9 +31,6 @@ export default function PendingGurantees() {
             if (borrowers.length === 0) return;
             let prevBorrower = "";
             borrowers?.slice().map(async (borrower) => {
-                console.log(prevBorrower != borrower);
-                console.log("prevBorrower", prevBorrower);
-                console.log("borrower", borrower);
                 const request = await contract.getGuarantyRequest(account, borrower);
                 if (
                     request &&
@@ -41,7 +38,6 @@ export default function PendingGurantees() {
                     !request.requestAccepted &&
                     prevBorrower != borrower
                 ) {
-                    console.log("request", request);
                     req.push(request);
                     prevBorrower = borrower;
                 }

@@ -89,7 +89,7 @@ export default function GuarantyModal({ isVisible, onClose, address }) {
                 >
                     <div className="p-4">
                         <Input
-                            label="Amount"
+                            label="Amount (in ETH)"
                             name="Amount"
                             type="text"
                             onChange={(event) => {

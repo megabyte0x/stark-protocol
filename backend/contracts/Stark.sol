@@ -558,11 +558,14 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
 
     // * FUNCTION: returns max borrow allowed to a user
     function getMaxBorrow(address userAddress) public view returns (uint256) {
-        if (getTotalAllowedValue(userAddress) > 0) return getTotalAllowedValue(userAddress);
         uint256 availableAmountValue = (getTotalSupplyValue(userAddress) +
             getTotalAllowedValue(userAddress)) -
             (((uint256(100) * getTotalBorrowValue(userAddress)) / uint256(80)) +
                 getTotalLockedValue(userAddress));
+
+        if(getTotalAllowedValue(userAddress) > 0) {
+            return availableAmountValue;
+        }
 
         return (availableAmountValue * uint256(80)) / uint256(100);
     }
@@ -590,6 +593,9 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
                 getTotalLockedValue(userAddress));
 
         (uint256 price, uint256 decimals) = getLatestPrice(tokenAddress);
+        if(s_allowedBalances[tokenAddress][userAddress] > 0) {
+            return availableAmountValue / (price / 10**decimals);
+        }
         return ((availableAmountValue / (price / 10**decimals)) * uint256(80)) / uint256(100);
     }
 

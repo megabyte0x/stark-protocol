@@ -8,13 +8,8 @@ import GuarantyModal from "./GuarantyModal";
 import P2PModal from "./P2PModal";
 
 export default function RequestLoanModal({ isVisible, onClose, address }) {
-    const [borrowAmount, setBorrowAmount] = useState("0");
-    const { isWeb3Enabled, account, chainId } = useMoralis();
-    const [isOkDisabled, setIsOkDisabled] = useState(false);
-    const [availableTokens, setAvailableTokens] = useState("0");
     const [showGuarantyModal, setShowGuarantyModal] = useState(false);
     const [showP2PModal, setShowP2PModal] = useState(false);
-    const dispatch = useNotification();
 
     return (
         <div className="pt-2">
@@ -34,7 +29,7 @@ export default function RequestLoanModal({ isVisible, onClose, address }) {
                         }}
                     >
                         <Card
-                            description="Borrow from a lender directly"
+                            description="Borrow from a lender directly with on-chain credentials (coming soon)"
                             onClick={() => setShowP2PModal(true)}
                             title="P2P"
                             tooltipText="Borrow from a lender directly"
