@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.1",
-    "@openzeppelin/contracts": "^4.6.0",
-    "@tableland/evm": "^2.0.2"
+    "@openzeppelin/contracts": "^4.6.0"
   }
 }

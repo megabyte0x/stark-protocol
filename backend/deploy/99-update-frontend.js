@@ -14,10 +14,9 @@ module.exports = async function () {
 
 async function updateAbi() {
     const stark = await ethers.getContract("Stark");
-    const creditLogic = await ethers.getContract("CreditLogic");
     const weth = await ethers.getContract("WETH");
-    const contracts = [stark, creditLogic, weth];
-    const strings = ["Stark.json", "CreditLogic.json", "Weth.json"];
+    const contracts = [stark, weth];
+    const strings = ["Stark.json", "Weth.json"];
 
     for (let i = 0; i < contracts.length; i++) {
         fs.writeFileSync(
@@ -29,7 +28,6 @@ async function updateAbi() {
 
 async function updateContractAddresses() {
     const stark = await ethers.getContract("Stark");
-    const creditLogic = await ethers.getContract("CreditLogic");
     const weth = await ethers.getContract("WETH");
     const wbtc = await ethers.getContract("WBTC");
     const dai = await ethers.getContract("DAI");
@@ -40,15 +38,13 @@ async function updateContractAddresses() {
 
     const addresses = [
         stark.address,
-        creditLogic.address,
         wbtc.address,
         weth.address,
         dai.address,
         usdc.address,
         st.address,
     ];
-
-    const strings = ["Stark", "CreditLogic", "WBTC", "WETH", "DAI", "USDC", "ST"];
+    const strings = ["Stark", "WBTC", "WETH", "DAI", "USDC", "ST"];
 
     for (let i = 0; i < addresses.length; i++) {
         contractAddress[strings[i]] = { [chainId]: [addresses[i]] };

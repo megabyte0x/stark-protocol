@@ -1,4 +1,4 @@
-const { network, ethers } = require("hardhat");
+const { network } = require("hardhat");
 const {
     networkConfig,
     developmentChains,
@@ -33,27 +33,9 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         waitConfirmations: waitConfirmations,
     });
 
-    const creditLogic = await deploy("CreditLogic", {
-        from: deployer,
-        log: true,
-        args: [],
-        waitConfirmations: waitConfirmations,
-    });
-
-    log("-------------------------------------------------");
-
-    const starkContract = await ethers.getContractAt("Stark", stark.address);
-    const creditLogicContract = await ethers.getContractAt("CreditLogic", creditLogic.address);
-
-    log("-------------------------------------------------");
-
-    await starkContract.addAllowContracts(creditLogic.address);
-    await creditLogicContract.setStarkAddress(stark.address);
-
-    log("-------------------------------------------------");
+    log("-------------------------");
     if (!developmentChains.includes(network.name)) {
         await verify(stark.address, args);
-        await verify(creditLogic.address, []);
     }
 };
 

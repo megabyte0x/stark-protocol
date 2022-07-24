@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useMoralis } from "react-moralis";
 import { Button, Input, Hero, Widget } from "web3uikit";
 import Messages from "./Messages";
-import RequestLoanModal from "./RequestLoanModal";
 
 export default function Auth() {
     const { account, isWeb3Enabled } = useMoralis();
@@ -14,7 +13,8 @@ export default function Auth() {
     const [address, setAddress] = useState("");
     const [conversation, setConversation] = useState();
     const [message, setMessage] = useState("");
-    const [showModal, setShowModal] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
+    const [targetValue, setTargetValue] = useState(message);
 
     async function sign() {
         setButtonDisabled(true);
@@ -39,7 +39,7 @@ export default function Auth() {
     }
 
     async function handleSend() {
-        if (message.length == 0) return;
+        setTargetValue("")
         await conversation.send(message);
         await chat();
     }
@@ -111,11 +111,11 @@ export default function Auth() {
                             <div></div>
                         )}
                     </div>
-                    <div className="absolute bottom-8 right-64">
+                    <div className="absolute bottom-8 right-40">
                         <Input
                             label="Enter your message"
                             name="message"
-                            width="900px"
+                            width="1000px"
                             prefixIcon="mail"
                             onChange={(e) => {
                                 setMessage(e.target.value);
@@ -125,7 +125,7 @@ export default function Auth() {
                             }}
                         />
                     </div>
-                    <div className="absolute bottom-8 right-36">
+                    <div className="absolute bottom-8 right-12">
                         <Button
                             id="test-button-primary"
                             text="Send"
@@ -136,22 +136,6 @@ export default function Auth() {
                             isLoading={buttonDisabled}
                         />
                     </div>
-                    <div className="absolute bottom-8 right-4">
-                        <Button
-                            id="test-button-primary"
-                            text="Request"
-                            theme="colored"
-                            color="yellow"
-                            type="button"
-                            size="large"
-                            onClick={() => setShowModal(true)}
-                        />
-                    </div>
-                    <RequestLoanModal
-                        isVisible={showModal}
-                        onClose={() => setShowModal(false)}
-                        address={address}
-                    />
                 </div>
             )}
         </div>

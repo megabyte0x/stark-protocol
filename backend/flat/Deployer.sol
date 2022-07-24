@@ -1,7 +1,37 @@
-//SPDX-License-Identifier: Unlicense
-pragma solidity 0.8.15;
+// Sources flattened with hardhat v2.9.9 https://hardhat.org
 
-import "@openzeppelin/contracts/utils/Context.sol";
+// File @openzeppelin/contracts/utils/Context.sol@v4.7.0
+
+// SPDX-License-Identifier: MIT
+// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+}
+
+
+// File contracts/Deal.sol
+
+
+pragma solidity 0.8.15;
 
 contract deal_contract is Context {
     address private deployer;
@@ -216,5 +246,107 @@ contract deal_contract is Context {
         dealDetails.noOfInstalments += _noOfAddInstalments;
         dealDetails.addedInterestRate = _interestRate;
         dealDetails.addedInstalments = true;
+    }
+}
+
+
+// File contracts/Deployer.sol
+
+
+pragma solidity 0.8.15;
+
+
+contract deployer_contract is Context {
+    deal_contract private dealContract;
+
+    address private owner;
+
+    constructor() {
+        owner = _msgSender();
+    }
+
+    struct Request {
+        address borrower; // * Address of the borrower
+        address lender; // * Address of the Lender
+        address dealAddress; // * Address of the Deal Contract
+        uint256 instalmentAmount; //* Amount to be paid in each instalment
+        uint256 totalAmount; // * Total Amount borrowed
+        uint256 interestRate; // * Interest Rate by the Lender
+        uint16 noOfInstalments; // * No of Instalments
+        bool requestAccepted; // * Request Raised by the lender or not
+    }
+
+    Request private request;
+
+    // * To store all the requests made in the protocol
+    mapping(address => Request) private requests;
+
+    function getRequests(address _borrower)
+        external
+        view
+        returns (Request memory)
+    {
+        return requests[_borrower];
+    }
+
+    // * To deploy the Deal Contract
+    function deploy() internal {
+        Request storage requestDetails = request;
+
+        dealContract = new deal_contract(
+            requestDetails.borrower,
+            requestDetails.lender,
+            requestDetails.instalmentAmount,
+            requestDetails.totalAmount,
+            requestDetails.interestRate,
+            requestDetails.noOfInstalments
+        );
+
+        requests[requestDetails.borrower].dealAddress = address(dealContract);
+
+        delete request;
+
+        // emit Event to notify both lender and borrower
+    }
+
+    // * To raise the request to borrow
+    function raiseRequest(
+        uint256 _instalmentAmount,
+        uint256 _totalAmount,
+        uint256 _interestRate,
+        uint16 _noOfInstalments,
+        address _lender
+    ) external {
+        require(!requests[_msgSender()].requestAccepted, "ERR:RA"); // RA => Request Accepted
+
+        Request storage requestDetails = request;
+
+        requestDetails.borrower = _msgSender();
+        requestDetails.lender = _lender;
+        requestDetails.instalmentAmount = _instalmentAmount;
+        requestDetails.totalAmount = _totalAmount;
+        requestDetails.interestRate = _interestRate;
+        requestDetails.noOfInstalments = _noOfInstalments;
+
+        requests[_msgSender()] = requestDetails;
+
+        // emit event to notify lender
+    }
+
+    // * To accept the request made by the borrower
+    function acceptRequest(address _borrower) external payable {
+        require(!requests[_borrower].requestAccepted, "ERR:AA"); // AA =>Already Accepted
+
+        uint256 value = msg.value;
+        require(requests[_borrower].totalAmount == value, "ERR:WV"); // WV => Wrong Value
+
+        requests[_borrower].requestAccepted = true;
+
+        deploy();
+
+        (bool success, ) = _borrower.call{value: value}("");
+        require(success, "ERR:OT"); // OT => On Transfer
+
+        // emit event to notify borrower
     }
 }
