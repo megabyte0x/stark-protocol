@@ -11,13 +11,50 @@ import { useEffect, useState } from "react";
 import contractAddresses from "../constants/networkMapping.json";
 import erc20Abi from "../constants/Weth.json";
 import { ethers } from "ethers";
+import sbtAbi from "../constants/Sbt.json";
+import { useNotification } from "web3uikit";
 
 export default function Home() {
     const { isWeb3Enabled, chainId, account } = useMoralis();
     const [tokenBalances, setTokenBalances] = useState({});
     const [isFetching, setIsFetching] = useState(true);
+    const [users, setUsers] = useState([]);
     const tokenAddresses = [];
     const tokenNames = ["WBTC", "WETH", "DAI", "USDC", "ST"];
+    const dispatch = useNotification();
+
+    async function handleSbtMint() {
+        const { ethereum } = window;
+        const provider = await new ethers.providers.Web3Provider(ethereum);
+        const signer = await provider.getSigner();
+        const address = await contractAddresses["Sbt"][parseInt(chainId)][0];
+        const contract = await new ethers.Contract(address, sbtAbi, signer);
+        const isMinted = await contract.isAlreadyMinted();
+        console.log("!isMinted", !isMinted);
+        try {
+            if (!users.includes(account) && !isMinted) {
+                console.log("minting");
+                const tx = await contract.safeMint();
+                const txReceipt = await tx.wait(1);
+                if (txReceipt.status === 1) {
+                    users.push(account);
+                    handleSbtMintSuccess();
+                    console.log("yes");
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    const handleSbtMintSuccess = async function () {
+        dispatch({
+            type: "success",
+            title: "Sbt received!",
+            message: "You can check your sbt on opensea testnet",
+            position: "topR",
+        });
+    };
 
     async function getTokenAddreses() {
         for (let token of tokenNames) {
@@ -61,6 +98,12 @@ export default function Home() {
             updateUI();
         }
     }, [isWeb3Enabled, tokenBalances]);
+
+    useEffect(() => {
+        if (isWeb3Enabled && chainId == 80001) {
+            handleSbtMint();
+        }
+    }, [isWeb3Enabled]);
 
     return (
         <div>
