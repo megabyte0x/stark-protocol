@@ -7,7 +7,7 @@ import contractAddresses from "../constants/networkMapping.json";
 import erc20Abi from "../constants/Weth.json";
 import { ethers } from "ethers";
 import creditAbi from "../constants/CreditLogic.json";
-import { Button } from "web3uikit";
+import { Button, useNotification } from "web3uikit";
 import Link from "next/link";
 
 export default function PendingGurantees() {
@@ -16,6 +16,7 @@ export default function PendingGurantees() {
     const [isFetching, setIsFetching] = useState(true);
     const [index, setIndex] = useState(0);
     const [buttonDisabled, setButtonDisabled] = useState(false);
+    const dispatch = useNotification();
 
     async function fetchRequests() {
         try {
