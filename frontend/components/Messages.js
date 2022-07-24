@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useMoralis } from "react-moralis";
-import { getChainById } from "web3uikit";
-import GuarantyModal from "./GuarantyModal";
 
 export default function Messages({ address, conversation }) {
     const [messages, setMessages] = useState([]);
