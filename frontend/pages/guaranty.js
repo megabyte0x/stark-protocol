@@ -1,60 +1,48 @@
-import Head from "next/head";
-import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import { useMoralis } from "react-moralis";
 import AvailableBorrowTable from "../components/AvailableBorrowTable";
-import WalletBalanceTable from "../components/WalletBalanceTable";
-import SuppliesTable from "../components/SuppliesTable";
 import BorrowsTable from "../components/BorrowsTable";
-import Moralis from "moralis";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import contractAddresses from "../constants/networkMapping.json";
 import erc20Abi from "../constants/Weth.json";
 import { ethers } from "ethers";
-import sbtAbi from "../constants/Sbt.json";
-import { useNotification } from "web3uikit";
+import creditAbi from "../constants/CreditLogic.json";
+import { Button } from "web3uikit";
+import Link from "next/link";
+import PendingGurantees from "../components/PendingGuarantees";
 
-export default function Home() {
+export default function Guaranty() {
     const { isWeb3Enabled, chainId, account } = useMoralis();
     const [tokenBalances, setTokenBalances] = useState({});
     const [isFetching, setIsFetching] = useState(true);
-    const [users, setUsers] = useState([]);
+    const [requests, setRequests] = useState([]);
     const tokenAddresses = [];
     const tokenNames = ["WBTC", "WETH", "DAI", "USDC", "ST"];
-    const dispatch = useNotification();
 
-    async function handleSbtMint() {
-        const { ethereum } = window;
-        const provider = await new ethers.providers.Web3Provider(ethereum);
-        const signer = await provider.getSigner();
-        const address = await contractAddresses["Sbt"][parseInt(chainId)][0];
-        const contract = await new ethers.Contract(address, sbtAbi, signer);
-        const isMinted = await contract.isAlreadyMinted();
-        console.log("!isMinted", !isMinted);
+    async function fetchRequests() {
         try {
-            if (!users.includes(account) && !isMinted) {
-                console.log("minting");
-                const tx = await contract.safeMint();
-                const txReceipt = await tx.wait(1);
-                if (txReceipt.status === 1) {
-                    users.push(account);
-                    handleSbtMintSuccess();
-                    console.log("yes");
+            console.log("fetching requests......");
+            const { ethereum } = window;
+            const provider = await new ethers.providers.Web3Provider(ethereum);
+            const signer = await provider.getSigner();
+            const contractAddress = await contractAddresses["CreditLogic"][parseInt(chainId)][0];
+            const contract = await new ethers.Contract(contractAddress, creditAbi, signer);
+            const borrowers = await contract.getBorrowers();
+            const req = [];
+            if (borrowers.length === 0) return;
+            borrowers?.slice().map(async (borrower) => {
+                const request = await contract.getGuarantyRequest(account, borrower);
+                if (request && request.lender.toLowerCase() == account) {
+                    console.log("request", request);
+                    req.push(request);
                 }
-            }
+            });
+            setRequests(req);
         } catch (e) {
+            console.log("This error is comming from fetchRequests");
             console.log(e);
         }
     }
-
-    const handleSbtMintSuccess = async function () {
-        dispatch({
-            type: "success",
-            title: "Sbt received!",
-            message: "You can check your sbt on opensea testnet",
-            position: "topR",
-        });
-    };
 
     async function getTokenAddreses() {
         for (let token of tokenNames) {
@@ -63,6 +51,7 @@ export default function Home() {
     }
 
     async function fetchBalances() {
+        console.log("fetching balances......");
         const balances = [];
         try {
             const { ethereum } = window;
@@ -93,17 +82,19 @@ export default function Home() {
         await fetchBalances();
     }
 
+    // const requestMemo = useMemo(() => {
+    //     if (!isFetching) fetchRequests();
+    // }, [isWeb3Enabled]);
+
+    useEffect(() => {
+        fetchRequests();
+    }, [isWeb3Enabled]);
+
     useEffect(() => {
         if (isWeb3Enabled && chainId == 80001) {
             updateUI();
         }
     }, [isWeb3Enabled, tokenBalances]);
-
-    useEffect(() => {
-        if (isWeb3Enabled && chainId == 80001) {
-            handleSbtMint();
-        }
-    }, [isWeb3Enabled]);
 
     return (
         <div>
@@ -112,8 +103,20 @@ export default function Home() {
                     {chainId == 80001 ? (
                         !isFetching ? (
                             <div className="p-4 grid grid-cols-2 gap-4 h-48">
-                                <div className="">
-                                    <SuppliesTable
+                                <div>
+                                    <PendingGurantees />
+                                </div>
+                                <div className="h-80">
+                                    <Link href="/chat">
+                                        <Button
+                                            text="Request Guaranty"
+                                            theme="primary"
+                                            size="large"
+                                        />
+                                    </Link>
+                                </div>
+                                <div>
+                                    <AvailableBorrowTable
                                         tokenBalances={tokenBalances}
                                         tokenAddresses={tokenAddresses}
                                         tokenNames={tokenNames}
@@ -122,22 +125,6 @@ export default function Home() {
                                 </div>
                                 <div className="">
                                     <BorrowsTable
-                                        tokenBalances={tokenBalances}
-                                        tokenAddresses={tokenAddresses}
-                                        tokenNames={tokenNames}
-                                        isFetching={isFetching}
-                                    />
-                                </div>
-                                <div className="">
-                                    <WalletBalanceTable
-                                        tokenBalances={tokenBalances}
-                                        tokenAddresses={tokenAddresses}
-                                        tokenNames={tokenNames}
-                                        isFetching={isFetching}
-                                    />
-                                </div>
-                                <div>
-                                    <AvailableBorrowTable
                                         tokenBalances={tokenBalances}
                                         tokenAddresses={tokenAddresses}
                                         tokenNames={tokenNames}

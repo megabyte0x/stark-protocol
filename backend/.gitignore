@@ -3,7 +3,6 @@ node_modules
 artifacts
 cache
 .vscode
-deployments
 gas-report.txt
 coverage
 .notes.md
