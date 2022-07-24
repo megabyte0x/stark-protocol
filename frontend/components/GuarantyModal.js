@@ -11,10 +11,16 @@ export default function GuarantyModal({ isVisible, onClose, address }) {
     const { isWeb3Enabled, account, chainId } = useMoralis();
     const [isOkDisabled, setIsOkDisabled] = useState(false);
     const [availableTokens, setAvailableTokens] = useState("0");
+    const [amount, setAmount] = useState("");
+    const [rentedUntil, setRentedUntil] = useState("");
     const dispatch = useNotification();
 
     async function raiseGuaranty() {
         try {
+            if (+availableTokens < +borrowAmount) {
+                alert("You can only borrow 80% of your collateral!");
+                return;
+            }
             setIsOkDisabled(true);
             const { ethereum } = window;
             const provider = await new ethers.providers.Web3Provider(ethereum);
@@ -55,6 +61,10 @@ export default function GuarantyModal({ isVisible, onClose, address }) {
         });
     };
 
+    // useEffect(() => {
+    // updateUI();
+    // }, [isWeb3Enabled]);
+
     return (
         <div className="pt-2">
             <Modal
@@ -83,14 +93,12 @@ export default function GuarantyModal({ isVisible, onClose, address }) {
                             name="Amount"
                             type="text"
                             onChange={(event) => {
-
                                 setAmount(event.target.value);
                             }}
                         />
                     </div>
                     <div className="p-4">
                         <Input
-
                             label="Rented Until (in months)"
                             name="Rented Until"
                             type="text"
