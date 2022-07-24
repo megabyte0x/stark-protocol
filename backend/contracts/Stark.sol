@@ -684,7 +684,6 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
     // * FUNCTION: To Lock the Balance of the lender
 
     mapping(address => mapping(address => uint256)) s_allowedBalances;
-
     mapping(address => address[]) s_lenders;
 
     function lockBalanceChanges(
@@ -724,15 +723,14 @@ contract Stark is ReentrancyGuard, KeeperCompatibleInterface, Ownable {
         // emit Event (optional)
     }
 
-    // * FUNCTION: Guaranty Contracts will change the balances after repayment.
-    function repayChanges(
-        address _tokenAddress,
-        address _lender,
-        address _borrower,
-        uint256 _tokenAmount
-    ) external onlyAllowedContracts(msg.sender) {
-        s_borrowedBalances[_tokenAddress][_borrower] -= _tokenAmount;
-        s_totalSupply[_tokenAddress] += _tokenAmount;
-        s_lockedBalances[_tokenAddress][_lender] -= _tokenAmount;
-    }
+    // function repayChanges(
+    //     address _tokenAddress,
+    //     address _lender,
+    //     address _borrower,
+    //     uint256 _tokenAmount
+    // ) external onlyAllowedContracts(msg.sender) {
+    //     s_borrowedBalances[_tokenAddress][_borrower] -= _tokenAmount;
+    //     s_totalSupply[_tokenAddress] += _tokenAmount;
+    //     s_lockedBalances[_tokenAddress][_lender] -= _tokenAmount;
+    // }
 }
