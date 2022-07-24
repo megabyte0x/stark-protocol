@@ -38,16 +38,13 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
         log: true,
         args: [],
         waitConfirmations: waitConfirmations,
-    })
+    });
 
-    await stark.addAllowContracts(creditLogic.address);
-    await creditLogic.setStarkAddress(stark.address);
-
-    log("-------------------------");
-    if (!developmentChains.includes(network.name)) {
-        await verify(stark.address, args);
-        await verify(creditLogic.address, []);
-
+    const sbt = await deploy("CreditScore", {
+        from: deployer,
+        log: true,
+        args: [creditLogic.address],
+        waitConfirmations: waitConfirmations,
     });
 
     log("-------------------------------------------------");
@@ -64,6 +61,7 @@ module.exports = async function ({ getNamedAccounts, deployments }) {
     if (!developmentChains.includes(network.name)) {
         await verify(stark.address, args);
         await verify(creditLogic.address, []);
+        await verify(sbt.address, [creditLogic.address]);
     }
 };
 
