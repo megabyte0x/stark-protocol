@@ -330,9 +330,6 @@ const { assert, expect } = require("chai");
                       const balance = await stark.getMaxWithdraw(wethTokenAddress, lender.address);
                       expect(balance).to.equal(amount.sub(gAmount));
                   });
-                  it("changes balances when repay", async function () {        
-                      stark = stark.connect(borrower);
-                      await stark.borrow(wethTokenAddress, ethers.utils.parseEther("0.05"));
                   it("changes balances when repay", async function () {
                       stark = stark.connect(borrower);
                       await stark.borrow(wethTokenAddress, gAmount);
@@ -340,9 +337,6 @@ const { assert, expect } = require("chai");
                           wethTokenAddress,
                           borrower.address
                       );
-                      const repayAmount = ethers.utils.parseEther("0.02");
-                      await wethToken.connect(borrower).approve(stark.address, repayAmount, { "from": borrower.address });
-                      console.log(ethers.utils.formatEther(await wethToken.balanceOf(borrower.address)));
                       const repayAmount = gAmount;
                       await wethToken
                           .connect(borrower)
@@ -355,96 +349,6 @@ const { assert, expect } = require("chai");
                           wethTokenAddress,
                           borrower.address
                       );
-                      expect(bal2).to.equal(bal.sub(ethers.utils.parseEther("0.02")));
-                  });
-              });
-            //   describe("p2p raise request", function () {
-            //       it("can't raise mutiple requests", async function () {
-            //           creditLogic = creditLogic.connect(borrower);
-            //           await creditLogic.p2pRaiseRequest(
-            //               p2pInstalmentAmount,
-            //               p2pAmount,
-            //               1,
-            //               10,
-            //               lender.address,
-            //               wethTokenAddress
-            //           );
-            //           creditLogic = creditLogic.connect(lender);
-            //           await creditLogic.p2pAcceptRequest(borrower.address);
-            //           await creditLogic.p2pRaiseRequest(
-            //               p2pInstalmentAmount,
-            //               p2pAmount,
-            //               1,
-            //               10,
-            //               lender.address,
-            //               wethTokenAddress
-            //           );
-            //           creditLogic = creditLogic.connect(borrower);
-            //           await expect(
-            //               creditLogic.p2pRaiseRequest(
-            //                   p2pInstalmentAmount,
-            //                   p2pAmount,
-            //                   1,
-            //                   10,
-            //                   lender.address,
-            //                   wethTokenAddress
-            //               )
-            //           ).to.be.revertedWith("Err: Already Raised");
-            //       });
-            //   });
-            //   describe("accept p2p request", function () {
-            //       beforeEach(async function () {
-            //           creditLogic = creditLogic.connect(borrower);
-            //           await creditLogic.p2pRaiseRequest(
-            //               p2pInstalmentAmount,
-            //               p2pAmount,
-            //               1,
-            //               10,
-            //               lender.address,
-            //               wethTokenAddress
-            //           );
-            //           creditLogic = creditLogic.connect(lender);
-            //           await creditLogic.p2pAcceptRequest(borrower.address);
-            //       });
-            //       it("locks balance of lender", async function () {
-            //           const balance = await stark.getMaxWithdraw(wethTokenAddress, lender.address);
-            //           // ! HERE
-            //           expect(balance).to.equal(amount.sub(gAmount));
-            //       });
-            //       it("deploys p2p contract", async function () {
-            //           const req = await creditLogic.getP2PRequest(
-            //               lender.address,
-            //               borrower.address
-            //           );
-            //           assert(req.dealAddress != "0x0000000000000000000000000000000000000000");
-            //           console.log(req.dealAddress);
-            //       });
-            //       it("deploy p2p contract changes balances", async function () {
-            //           const req = await creditLogic.getP2PRequest(
-            //               lender.address,
-            //               borrower.address
-            //           );
-            //           let p2pContract = await ethers.getContractAt(
-            //               "deal_contract",
-            //               req.dealAddress
-            //           );
-            //           p2pContract = p2pContract.connect(borrower);
-            //           stark = stark.connect(borrower);
-            //           await stark.borrow(wethTokenAddress, ethers.utils.parseEther("0.05"));
-            //           const bal = await stark.getBorrowedBalance(
-            //               wethTokenAddress,
-            //               borrower.address
-            //           );
-            //           // await gurantyContract.repay(ethers.utils.parseEther("0.02"));
-            //           await p2pContract.payInInstalment();
-            //           const bal2 = await stark.getBorrowedBalance(
-            //               wethTokenAddress,
-            //               borrower.address
-            //           );
-            //           // ! HERE
-            //           expect(bal2).to.equal(bal.sub(ethers.utils.parseEther("0.02")));
-            //       });
-            //   });
                       expect(bal2).to.equal(bal.sub(gAmount));
                       const max = await stark.getMaxWithdraw(wethTokenAddress, user.address);
                       const supply = await stark.getSupplyBalance(wethTokenAddress, user.address);
