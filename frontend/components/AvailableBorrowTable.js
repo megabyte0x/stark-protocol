@@ -26,7 +26,7 @@ export default function AvailableBorrowTable({
             const signer = await provider.getSigner();
             const contractAddress = await contractAddresses["Stark"][parseInt(chainId)][0];
             const contract = await new ethers.Contract(contractAddress, starkAbi, signer);
-            const supplyInUsd = await contract.getTotalSupplyValue(account);
+            const supplyInUsd = await contract.getTotalSupplyAllowedValue(account);
             const rows = [];
 
             tokenNames.forEach(async (tokenName, i) => {
